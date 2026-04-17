@@ -7,9 +7,8 @@ using Random = UnityEngine.Random;
 namespace CraneMinigame
 {
     [DisallowMultipleComponent]
-    public sealed class TimingHitMinigameController : MonoBehaviour
+    public sealed class TimingHitMinigameController : GameController
     {
-        public event Action<bool> RoundFinished;
 
         [SerializeField] private Transform indicatorPivot;
 
@@ -40,49 +39,13 @@ namespace CraneMinigame
         private GUIStyle titleStyle;
         private GUIStyle bodyStyle;
         private GUIStyle statusStyle;
-        private bool isConfigured;
-        private bool autoRestartEnabled = true;
-        private bool roundReported;
-
-        public void SetupDemo(Transform pivotRef)
-        {
-            indicatorPivot = pivotRef;
-            CacheInitialState();
-        }
-
-        public void BeginManagedRound()
-        {
-            autoRestartEnabled = false;
-            ResetRound();
-        }
-
-        public void EndManagedRound()
-        {
-            autoRestartEnabled = false;
-        }
-
-        private void Awake()
-        {
-            CacheInitialState();
-
-            if (!isConfigured)
-            {
-                Debug.LogWarning($"{nameof(TimingHitMinigameController)} is missing required references.", this);
-                enabled = false;
-                return;
-            }
-
-            ResetRound();
-        }
 
         private void Update()
         {
             HandleInput();
 
             if (roundState != RoundState.Playing)
-            {
                 return;
-            }
 
             currentAngle += rotationSpeed * Time.deltaTime;
             ApplyIndicatorRotation();
@@ -91,9 +54,7 @@ namespace CraneMinigame
         private void OnGUI()
         {
             if (!enabled)
-            {
                 return;
-            }
 
             EnsureGuiStyles();
 
@@ -114,34 +75,25 @@ namespace CraneMinigame
         {
             Keyboard keyboard = Keyboard.current;
             if (keyboard == null)
-            {
                 return;
-            }
 
             bool actionPressed = keyboard.spaceKey.wasPressedThisFrame;
             bool restartPressed = keyboard.rKey.wasPressedThisFrame || keyboard.enterKey.wasPressedThisFrame;
 
-            if (roundState != RoundState.Playing)
+            if (roundState == RoundState.Playing)
             {
-                if (!autoRestartEnabled)
-                {
+                if (!actionPressed)
                     return;
-                }
 
-                if (actionPressed || restartPressed)
-                {
-                    ResetRound();
-                }
-
+                RegisterHit();
                 return;
             }
 
-            if (!actionPressed)
-            {
+            if (!autoRestartEnabled)
                 return;
-            }
 
-            RegisterHit();
+            if (actionPressed || restartPressed)
+                ResetRound();
         }
 
         private void RegisterHit()
@@ -160,16 +112,12 @@ namespace CraneMinigame
                 lastResult = "GOOD! +1";
             }
             else
-            {
                 lastResult = "MISS! +0";
-            }
 
             JitterRotationPattern();
 
             if (attemptsUsed >= totalAttempts)
-            {
                 FinishRound();
-            }
         }
 
         private void JitterRotationPattern()
@@ -197,7 +145,7 @@ namespace CraneMinigame
             }
         }
 
-        private void ResetRound()
+        protected override void ResetRound()
         {
             roundState = RoundState.Playing;
             currentScore = 0;
@@ -209,25 +157,9 @@ namespace CraneMinigame
             ApplyIndicatorRotation();
         }
 
-        private void ReportRoundFinished(bool isSuccess)
-        {
-            if (roundReported)
-            {
-                return;
-            }
-
-            roundReported = true;
-            RoundFinished?.Invoke(isSuccess);
-        }
-
         private void ApplyIndicatorRotation()
         {
             indicatorPivot.localRotation = Quaternion.Euler(0f, 0f, currentAngle);
-        }
-
-        private void CacheInitialState()
-        {
-            isConfigured = indicatorPivot != null;
         }
 
         private void EnsureGuiStyles()

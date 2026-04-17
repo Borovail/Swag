@@ -7,12 +7,11 @@ using Random = UnityEngine.Random;
 namespace CraneMinigame
 {
     [DisallowMultipleComponent]
-    public sealed class CloseTheAdMinigameController : MonoBehaviour
+    public sealed class CloseTheAdMinigameController : GameController
     {
-        public event Action<bool> RoundFinished;
 
         [SerializeField] private Transform closeButton;
-        [SerializeField] private Camera targetCamera;
+        private Camera targetCamera;
 
         [Header("Movement")]
         [SerializeField] private Vector2 localMinBounds = new Vector2(-1.7f, 0.75f);
@@ -40,36 +39,13 @@ namespace CraneMinigame
         private Vector2 velocity = new Vector2(1f, 1f);
         private Vector3 closeButtonStartLocalPosition;
         private float timeRemaining;
-        private bool isConfigured;
         private GUIStyle titleStyle;
         private GUIStyle bodyStyle;
         private GUIStyle statusStyle;
-        private bool autoRestartEnabled = true;
-        private bool roundReported;
-
-        public void BeginManagedRound()
-        {
-            autoRestartEnabled = false;
-            ResetRound();
-        }
-
-        public void EndManagedRound()
-        {
-            autoRestartEnabled = false;
-        }
 
         private void Awake()
         {
-            CacheInitialState();
-
-            if (!isConfigured)
-            {
-                Debug.LogWarning($"{nameof(CloseTheAdMinigameController)} is missing one or more references.", this);
-                enabled = false;
-                return;
-            }
-
-            ResetRound();
+            targetCamera = Camera.main;
         }
 
         private void Update()
@@ -77,28 +53,23 @@ namespace CraneMinigame
             HandleInput();
 
             if (roundState != RoundState.Playing)
-            {
                 return;
-            }
 
             MoveCloseButton();
             timeRemaining -= Time.deltaTime;
 
-            if (timeRemaining <= 0f)
-            {
-                timeRemaining = 0f;
-                roundState = RoundState.Lost;
-                onFailure.Invoke();
-                ReportRoundFinished(false);
-            }
+            if (timeRemaining > 0f) return;
+
+            timeRemaining = 0f;
+            roundState = RoundState.Lost;
+            onFailure.Invoke();
+            ReportRoundFinished(false);
         }
 
         private void OnGUI()
         {
             if (!enabled)
-            {
                 return;
-            }
 
             EnsureGuiStyles();
 
@@ -120,37 +91,37 @@ namespace CraneMinigame
             Mouse mouse = Mouse.current;
             Keyboard keyboard = Keyboard.current;
 
-            bool restartPressed = (keyboard != null && (keyboard.rKey.wasPressedThisFrame || keyboard.enterKey.wasPressedThisFrame));
-            if (roundState != RoundState.Playing)
+            bool restartPressed = keyboard != null && (keyboard.rKey.wasPressedThisFrame || keyboard.enterKey.wasPressedThisFrame);
+            if (roundState == RoundState.Playing)
             {
-                if (!autoRestartEnabled)
-                {
+                if (mouse == null || !mouse.leftButton.wasPressedThisFrame)
                     return;
-                }
 
-                if (restartPressed || (mouse != null && mouse.leftButton.wasPressedThisFrame))
+                if (targetCamera == null)
+                    targetCamera = Camera.main != null ? Camera.main : FindFirstObjectByType<Camera>();
+
+                if (targetCamera == null)
+                    return;
+
+                Vector2 cursorScreen = mouse.position.ReadValue();
+                Vector3 cursorWorld = targetCamera.ScreenToWorldPoint(new Vector3(cursorScreen.x, cursorScreen.y, Mathf.Abs(targetCamera.transform.position.z)));
+                cursorWorld.z = closeButton.position.z;
+
+                if (Vector2.Distance(cursorWorld, closeButton.position) <= clickRadius)
                 {
-                    ResetRound();
+                    roundState = RoundState.Won;
+                    onSuccess.Invoke();
+                    ReportRoundFinished(true);
                 }
 
                 return;
             }
 
-            if (mouse == null || !mouse.leftButton.wasPressedThisFrame || targetCamera == null)
-            {
+            if (!autoRestartEnabled)
                 return;
-            }
 
-            Vector2 cursorScreen = mouse.position.ReadValue();
-            Vector3 cursorWorld = targetCamera.ScreenToWorldPoint(new Vector3(cursorScreen.x, cursorScreen.y, Mathf.Abs(targetCamera.transform.position.z)));
-            cursorWorld.z = closeButton.position.z;
-
-            if (Vector2.Distance(cursorWorld, closeButton.position) <= clickRadius)
-            {
-                roundState = RoundState.Won;
-                onSuccess.Invoke();
-                ReportRoundFinished(true);
-            }
+            if (restartPressed || (mouse != null && mouse.leftButton.wasPressedThisFrame))
+                ResetRound();
         }
 
         private void MoveCloseButton()
@@ -187,7 +158,7 @@ namespace CraneMinigame
             velocity = Vector2.ClampMagnitude(velocity, 1.75f);
         }
 
-        private void ResetRound()
+        protected override void ResetRound()
         {
             roundState = RoundState.Playing;
             timeRemaining = timeLimit;
@@ -195,9 +166,7 @@ namespace CraneMinigame
             roundReported = false;
 
             if (velocity.sqrMagnitude < 0.01f)
-            {
                 velocity = new Vector2(1f, 0.8f);
-            }
 
             Vector3 nextPosition = closeButtonStartLocalPosition;
             if (randomizeStartPoint)
@@ -207,34 +176,6 @@ namespace CraneMinigame
             }
 
             closeButton.localPosition = nextPosition;
-        }
-
-        private void ReportRoundFinished(bool isSuccess)
-        {
-            if (roundReported)
-            {
-                return;
-            }
-
-            roundReported = true;
-            RoundFinished?.Invoke(isSuccess);
-        }
-
-        private void CacheInitialState()
-        {
-            if (targetCamera == null)
-            {
-                targetCamera = Camera.main;
-            }
-
-            isConfigured = closeButton != null && targetCamera != null;
-
-            if (!isConfigured)
-            {
-                return;
-            }
-
-            closeButtonStartLocalPosition = closeButton.localPosition;
         }
 
         private void EnsureGuiStyles()

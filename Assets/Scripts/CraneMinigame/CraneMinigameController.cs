@@ -7,9 +7,8 @@ using Random = UnityEngine.Random;
 namespace CraneMinigame
 {
     [DisallowMultipleComponent]
-    public sealed class CraneMinigameController : MonoBehaviour
+    public sealed class CraneMinigameController : GameController
     {
-        public event Action<bool> RoundFinished;
 
         [SerializeField] private Transform carriage;
         [SerializeField] private Transform hook;
@@ -48,7 +47,6 @@ namespace CraneMinigame
 
         private RoundState roundState = RoundState.Aiming;
         private float horizontalDirection = 1f;
-        private bool isConfigured;
         private bool targetAttached;
         private Transform targetOriginalParent;
         private Vector3 targetStartPosition;
@@ -57,32 +55,15 @@ namespace CraneMinigame
         private GUIStyle titleStyle;
         private GUIStyle bodyStyle;
         private GUIStyle statusStyle;
-        private bool autoRestartEnabled = true;
-        private bool roundReported;
-
-        public void BeginManagedRound()
-        {
-            autoRestartEnabled = false;
-            ResetRound();
-        }
-
-        public void EndManagedRound()
-        {
-            autoRestartEnabled = false;
-        }
 
         private void Awake()
         {
-            CacheInitialState();
-
-            if (!isConfigured)
+            if (targetOriginalParent == null)
             {
-                Debug.LogWarning($"{nameof(CraneMinigameController)} is missing one or more references.", this);
-                enabled = false;
-                return;
+                targetOriginalParent = targetObject.parent;
+                targetStartScale = targetObject.localScale;
+                targetStartPosition = targetObject.localPosition;
             }
-
-            ResetRound();
         }
 
         private void Update()
@@ -106,9 +87,7 @@ namespace CraneMinigame
         private void OnGUI()
         {
             if (!enabled)
-            {
                 return;
-            }
 
             EnsureGuiStyles();
 
@@ -129,29 +108,20 @@ namespace CraneMinigame
         {
             Keyboard keyboard = Keyboard.current;
 
-            if (keyboard == null)
-            {
-                return;
-            }
-
             bool actionPressed = keyboard.spaceKey.wasPressedThisFrame;
             bool restartPressed = keyboard.rKey.wasPressedThisFrame || keyboard.enterKey.wasPressedThisFrame;
 
             if ((roundState == RoundState.Won || roundState == RoundState.Lost) && (actionPressed || restartPressed))
             {
                 if (!autoRestartEnabled)
-                {
                     return;
-                }
 
                 ResetRound();
                 return;
             }
 
             if (roundState == RoundState.Aiming && actionPressed)
-            {
                 roundState = RoundState.Descending;
-            }
         }
 
         private void UpdateHorizontalMovement()
@@ -207,9 +177,7 @@ namespace CraneMinigame
         private void TryGrabTarget()
         {
             if (targetAttached)
-            {
                 return;
-            }
 
             Vector3 hookTipPosition = hook.position + (Vector3.down * 0.15f);
             Vector3 targetPosition = targetObject.position;
@@ -218,9 +186,7 @@ namespace CraneMinigame
             bool insideVerticalWindow = Mathf.Abs(hookTipPosition.y - targetPosition.y) <= grabToleranceY;
 
             if (!insideHorizontalWindow || !insideVerticalWindow)
-            {
                 return;
-            }
 
             targetAttached = true;
             targetObject.SetParent(hook, true);
@@ -229,7 +195,7 @@ namespace CraneMinigame
             targetObject.localRotation = Quaternion.identity;
         }
 
-        private void ResetRound()
+        protected override void ResetRound()
         {
             roundState = RoundState.Aiming;
             horizontalDirection = 1f;
@@ -250,24 +216,11 @@ namespace CraneMinigame
 
             Vector3 nextTargetPosition = targetStartPosition;
             if (targetSpawnRange.x < targetSpawnRange.y)
-            {
                 nextTargetPosition.x = Random.Range(targetSpawnRange.x, targetSpawnRange.y);
-            }
 
             targetObject.position = nextTargetPosition;
             targetObject.rotation = Quaternion.identity;
             targetObject.localScale = targetStartScale;
-        }
-
-        private void ReportRoundFinished(bool isSuccess)
-        {
-            if (roundReported)
-            {
-                return;
-            }
-
-            roundReported = true;
-            RoundFinished?.Invoke(isSuccess);
         }
 
         private void SetHookLocalY(float nextY)
@@ -291,30 +244,6 @@ namespace CraneMinigame
             Vector3 ropeScale = rope.localScale;
             ropeScale.y = ropeLength;
             rope.localScale = ropeScale;
-        }
-
-        private void CacheInitialState()
-        {
-            isConfigured = carriage != null && hook != null && rope != null && targetObject != null;
-
-            if (!isConfigured)
-            {
-                return;
-            }
-
-            if (targetOriginalParent == null)
-            {
-                targetOriginalParent = targetObject.parent;
-            }
-
-            targetStartPosition = targetObject.position;
-            targetStartScale = targetObject.localScale;
-            hookStartLocalPosition = hook.localPosition;
-
-            if (!Mathf.Approximately(hookStartLocalPosition.y, hookTopLocalY))
-            {
-                hookTopLocalY = hookStartLocalPosition.y;
-            }
         }
 
         private void EnsureGuiStyles()
