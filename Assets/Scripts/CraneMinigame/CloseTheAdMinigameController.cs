@@ -1,12 +1,16 @@
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.InputSystem;
+using System;
+using Random = UnityEngine.Random;
 
 namespace CraneMinigame
 {
     [DisallowMultipleComponent]
     public sealed class CloseTheAdMinigameController : MonoBehaviour
     {
+        public event Action<bool> RoundFinished;
+
         [SerializeField] private Transform closeButton;
         [SerializeField] private Camera targetCamera;
 
@@ -40,15 +44,21 @@ namespace CraneMinigame
         private GUIStyle titleStyle;
         private GUIStyle bodyStyle;
         private GUIStyle statusStyle;
+        private bool autoRestartEnabled = true;
+        private bool roundReported;
 
-        public void SetupDemo(Transform closeButtonRef, Camera cameraRef)
+        public void BeginManagedRound()
         {
-            closeButton = closeButtonRef;
-            targetCamera = cameraRef;
-            CacheInitialState();
+            autoRestartEnabled = false;
+            ResetRound();
         }
 
-        private void Start()
+        public void EndManagedRound()
+        {
+            autoRestartEnabled = false;
+        }
+
+        private void Awake()
         {
             CacheInitialState();
 
@@ -79,6 +89,7 @@ namespace CraneMinigame
                 timeRemaining = 0f;
                 roundState = RoundState.Lost;
                 onFailure.Invoke();
+                ReportRoundFinished(false);
             }
         }
 
@@ -112,6 +123,11 @@ namespace CraneMinigame
             bool restartPressed = (keyboard != null && (keyboard.rKey.wasPressedThisFrame || keyboard.enterKey.wasPressedThisFrame));
             if (roundState != RoundState.Playing)
             {
+                if (!autoRestartEnabled)
+                {
+                    return;
+                }
+
                 if (restartPressed || (mouse != null && mouse.leftButton.wasPressedThisFrame))
                 {
                     ResetRound();
@@ -133,6 +149,7 @@ namespace CraneMinigame
             {
                 roundState = RoundState.Won;
                 onSuccess.Invoke();
+                ReportRoundFinished(true);
             }
         }
 
@@ -175,6 +192,7 @@ namespace CraneMinigame
             roundState = RoundState.Playing;
             timeRemaining = timeLimit;
             velocity = Random.insideUnitCircle.normalized;
+            roundReported = false;
 
             if (velocity.sqrMagnitude < 0.01f)
             {
@@ -189,6 +207,17 @@ namespace CraneMinigame
             }
 
             closeButton.localPosition = nextPosition;
+        }
+
+        private void ReportRoundFinished(bool isSuccess)
+        {
+            if (roundReported)
+            {
+                return;
+            }
+
+            roundReported = true;
+            RoundFinished?.Invoke(isSuccess);
         }
 
         private void CacheInitialState()

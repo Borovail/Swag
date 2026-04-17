@@ -1,12 +1,16 @@
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.InputSystem;
+using System;
+using Random = UnityEngine.Random;
 
 namespace CraneMinigame
 {
     [DisallowMultipleComponent]
     public sealed class CraneMinigameController : MonoBehaviour
     {
+        public event Action<bool> RoundFinished;
+
         [SerializeField] private Transform carriage;
         [SerializeField] private Transform hook;
         [SerializeField] private Transform rope;
@@ -53,17 +57,21 @@ namespace CraneMinigame
         private GUIStyle titleStyle;
         private GUIStyle bodyStyle;
         private GUIStyle statusStyle;
+        private bool autoRestartEnabled = true;
+        private bool roundReported;
 
-        public void SetupDemo(Transform carriageRef, Transform hookRef, Transform ropeRef, Transform targetRef)
+        public void BeginManagedRound()
         {
-            carriage = carriageRef;
-            hook = hookRef;
-            rope = ropeRef;
-            targetObject = targetRef;
-            CacheInitialState();
+            autoRestartEnabled = false;
+            ResetRound();
         }
 
-        private void Start()
+        public void EndManagedRound()
+        {
+            autoRestartEnabled = false;
+        }
+
+        private void Awake()
         {
             CacheInitialState();
 
@@ -131,6 +139,11 @@ namespace CraneMinigame
 
             if ((roundState == RoundState.Won || roundState == RoundState.Lost) && (actionPressed || restartPressed))
             {
+                if (!autoRestartEnabled)
+                {
+                    return;
+                }
+
                 ResetRound();
                 return;
             }
@@ -175,6 +188,7 @@ namespace CraneMinigame
             {
                 roundState = RoundState.Lost;
                 onFailure.Invoke();
+                ReportRoundFinished(false);
             }
         }
 
@@ -186,6 +200,7 @@ namespace CraneMinigame
             {
                 roundState = RoundState.Won;
                 onSuccess.Invoke();
+                ReportRoundFinished(true);
             }
         }
 
@@ -209,6 +224,7 @@ namespace CraneMinigame
 
             targetAttached = true;
             targetObject.SetParent(hook, true);
+            Debug.Log("sET PARENT");
             targetObject.localPosition = grabbedTargetLocalOffset;
             targetObject.localRotation = Quaternion.identity;
         }
@@ -218,10 +234,12 @@ namespace CraneMinigame
             roundState = RoundState.Aiming;
             horizontalDirection = 1f;
             targetAttached = false;
+            roundReported = false;
 
             if (targetObject.parent != targetOriginalParent)
             {
                 targetObject.SetParent(targetOriginalParent, true);
+                Debug.Log("sET PARENT");
             }
 
             Vector3 carriagePosition = carriage.position;
@@ -239,6 +257,17 @@ namespace CraneMinigame
             targetObject.position = nextTargetPosition;
             targetObject.rotation = Quaternion.identity;
             targetObject.localScale = targetStartScale;
+        }
+
+        private void ReportRoundFinished(bool isSuccess)
+        {
+            if (roundReported)
+            {
+                return;
+            }
+
+            roundReported = true;
+            RoundFinished?.Invoke(isSuccess);
         }
 
         private void SetHookLocalY(float nextY)

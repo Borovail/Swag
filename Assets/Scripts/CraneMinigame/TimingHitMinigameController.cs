@@ -1,12 +1,16 @@
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.InputSystem;
+using System;
+using Random = UnityEngine.Random;
 
 namespace CraneMinigame
 {
     [DisallowMultipleComponent]
     public sealed class TimingHitMinigameController : MonoBehaviour
     {
+        public event Action<bool> RoundFinished;
+
         [SerializeField] private Transform indicatorPivot;
 
         [Header("Gameplay")]
@@ -37,6 +41,8 @@ namespace CraneMinigame
         private GUIStyle bodyStyle;
         private GUIStyle statusStyle;
         private bool isConfigured;
+        private bool autoRestartEnabled = true;
+        private bool roundReported;
 
         public void SetupDemo(Transform pivotRef)
         {
@@ -44,7 +50,18 @@ namespace CraneMinigame
             CacheInitialState();
         }
 
-        private void Start()
+        public void BeginManagedRound()
+        {
+            autoRestartEnabled = false;
+            ResetRound();
+        }
+
+        public void EndManagedRound()
+        {
+            autoRestartEnabled = false;
+        }
+
+        private void Awake()
         {
             CacheInitialState();
 
@@ -106,6 +123,11 @@ namespace CraneMinigame
 
             if (roundState != RoundState.Playing)
             {
+                if (!autoRestartEnabled)
+                {
+                    return;
+                }
+
                 if (actionPressed || restartPressed)
                 {
                     ResetRound();
@@ -164,12 +186,14 @@ namespace CraneMinigame
                 roundState = RoundState.Won;
                 lastResult = $"Victory! Final score: {currentScore}";
                 onSuccess.Invoke();
+                ReportRoundFinished(true);
             }
             else
             {
                 roundState = RoundState.Lost;
                 lastResult = $"Failed. Final score: {currentScore}";
                 onFailure.Invoke();
+                ReportRoundFinished(false);
             }
         }
 
@@ -181,7 +205,19 @@ namespace CraneMinigame
             currentAngle = Random.Range(0f, 360f);
             rotationSpeed = Random.Range(190f, 280f) * (Random.value < 0.5f ? -1f : 1f);
             lastResult = "Press Space to hit the timing window.";
+            roundReported = false;
             ApplyIndicatorRotation();
+        }
+
+        private void ReportRoundFinished(bool isSuccess)
+        {
+            if (roundReported)
+            {
+                return;
+            }
+
+            roundReported = true;
+            RoundFinished?.Invoke(isSuccess);
         }
 
         private void ApplyIndicatorRotation()
