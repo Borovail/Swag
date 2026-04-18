@@ -24,10 +24,17 @@ namespace CraneMinigame
         [SerializeField] private float finishLevelDuration = 2f;
         [SerializeField] private string PathToGameControllers;
 
+        [Header("Difficulty Scaling")]
+        [SerializeField] private float timeLimitReductionPerRound = 0.5f;
+        [SerializeField] private float minTimeLimit = 3f;
+        [SerializeField] private int roundsPerSpeedIncrease = 3;
+        [SerializeField] private float speedMultiplierIncrement = 0.15f;
+
         private GameController currentMinigame;
         private Coroutine transitionRoutine;
         private int currentHealth = 3;
         private int clearedMinigamesCount;
+        private int totalRoundsPlayed;
 
         private GameController[] _gameControllers;
         private int _currentMinigameIndex = -1;
@@ -90,9 +97,20 @@ namespace CraneMinigame
 
             nextMinigame.gameObject.SetActive(true);
 
+            int speedSteps = totalRoundsPlayed / Mathf.Max(1, roundsPerSpeedIncrease);
+
+            float reducedTime = Mathf.Max(minTimeLimit,
+                nextMinigame.GetBaseTimeLimit() - timeLimitReductionPerRound * speedSteps);
+            nextMinigame.SetTimeLimit(reducedTime);
+
+            float speedMultiplier = 1f + speedSteps * speedMultiplierIncrement;
+            nextMinigame.SetSpeedMultiplier(speedMultiplier);
+
             nextMinigame.RoundFinished -= HandleRoundFinished;
             nextMinigame.RoundFinished += HandleRoundFinished;
             nextMinigame.BeginManagedRound();
+
+            totalRoundsPlayed++;
         }
 
         private GameController ChooseNextMinigame()
@@ -179,6 +197,7 @@ namespace CraneMinigame
         {
             currentHealth = 3;
             clearedMinigamesCount = 0;
+            totalRoundsPlayed = 0;
             _currentMinigameIndex = -1;
             currentMinigame = null;
             transitionRoutine = null;

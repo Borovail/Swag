@@ -27,6 +27,9 @@ namespace SniperMinigame
         [SerializeField] private float returnSpeed = 50f;
         [SerializeField] private Vector3 recoilEuler = new(0f, 40f, -30f);
 
+        [Header("Game Settings")]
+        [SerializeField] private float timeLimit = 10f;
+
         [Header("Events")]
         [SerializeField] private UnityEvent onSuccess = new UnityEvent();
         [SerializeField] private UnityEvent onFailure = new UnityEvent();
@@ -49,6 +52,8 @@ namespace SniperMinigame
 
         private RoundState roundState = RoundState.WaitingForShot;
         private RifleState rifleState = RifleState.Idle;
+        private float timeElapsed;
+        private float baseTimeLimit;
         private readonly List<GameObject> spawnedTargets = new();
         private Sprite[] targetSprites;
         private Sprite[] decoySprites;
@@ -61,6 +66,7 @@ namespace SniperMinigame
 
         private void Awake()
         {
+            baseTimeLimit = timeLimit;
             targetSprites = LoadSprites(targetsFolder);
             decoySprites  = LoadSprites(decoysFolder);
 
@@ -87,6 +93,17 @@ namespace SniperMinigame
         {
             HandleInput();
             UpdateRifle();
+
+            if (roundState == RoundState.WaitingForShot)
+            {
+                timeElapsed += Time.deltaTime;
+                if (timeElapsed >= timeLimit)
+                {
+                    roundState = RoundState.Lost;
+                    onFailure.Invoke();
+                    ReportRoundFinished(false);
+                }
+            }
         }
 
         private void HandleInput()
@@ -271,11 +288,15 @@ namespace SniperMinigame
             return false;
         }
 
+        public override void SetTimeLimit(float seconds) => timeLimit = seconds;
+        public override float GetBaseTimeLimit() => baseTimeLimit;
+
         protected override void ResetRound()
         {
             roundState = RoundState.WaitingForShot;
             rifleState = RifleState.Idle;
             roundReported = false;
+            timeElapsed = 0f;
 
             if (rifleTransform != null)
                 rifleTransform.localRotation = Quaternion.identity;
@@ -309,9 +330,9 @@ namespace SniperMinigame
 
         private string GetStatusText() => roundState switch
         {
-            RoundState.WaitingForShot => $"Status: Find and shoot \"{correctTargetName}\"!",
+            RoundState.WaitingForShot => $"Status: Find \"{correctTargetName}\"!  —  {Mathf.Max(0f, timeLimit - timeElapsed):0.0}s left",
             RoundState.Won            => "Status: Target eliminated! Press R to restart.",
-            RoundState.Lost           => "Status: Wrong target! Press R to try again.",
+            RoundState.Lost           => "Status: Time's up / wrong target! Press R to try again.",
             _                         => string.Empty
         };
 

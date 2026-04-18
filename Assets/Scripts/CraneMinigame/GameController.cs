@@ -9,6 +9,10 @@ public abstract class GameController : MonoBehaviour
 
     public event Action<bool> RoundFinished;
 
+    public virtual void SetTimeLimit(float seconds) { }
+    public virtual float GetBaseTimeLimit() => float.MaxValue;
+    public virtual void SetSpeedMultiplier(float multiplier) { }
+
     public void BeginManagedRound()
     {
         autoRestartEnabled = false;

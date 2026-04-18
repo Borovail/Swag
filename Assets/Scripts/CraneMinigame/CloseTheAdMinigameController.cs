@@ -41,6 +41,7 @@ namespace CraneMinigame
             Lost
         }
 
+        private float baseTimeLimit;
         private RoundState roundState = RoundState.Playing;
         private Vector2 velocity = new Vector2(1f, 1f);
         private Vector3 closeButtonStartLocalPosition;
@@ -54,6 +55,7 @@ namespace CraneMinigame
 
         private void Awake()
         {
+            baseTimeLimit = timeLimit;
             targetCamera = Camera.main;
             if (closeButton != null)
                 closeButtonStartLocalPosition = closeButton.localPosition;
@@ -196,6 +198,9 @@ namespace CraneMinigame
 
             velocity = Vector2.ClampMagnitude(velocity, 1.75f);
         }
+
+        public override void SetTimeLimit(float seconds) => timeLimit = seconds;
+        public override float GetBaseTimeLimit() => baseTimeLimit;
 
         protected override void ResetRound()
         {
