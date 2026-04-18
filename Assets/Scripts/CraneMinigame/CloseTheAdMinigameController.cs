@@ -1,17 +1,17 @@
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.InputSystem;
-using System;
 using Random = UnityEngine.Random;
+using System.Collections.Generic;
 
 namespace CraneMinigame
 {
     [DisallowMultipleComponent]
     public sealed class CloseTheAdMinigameController : GameController
     {
-
         [SerializeField] private Transform closeButton;
-        [SerializeField] private GameObject itemToDisableOnWin;
+        [SerializeField] private List<BoxCollider2D> ads = new List<BoxCollider2D>();
+
         private Camera targetCamera;
 
         [Header("Movement")]
@@ -20,6 +20,9 @@ namespace CraneMinigame
         [SerializeField] private float moveSpeed = 2.5f;
         [SerializeField] private float idleSpeed = 0.6f;
         [SerializeField] private float clickRadius = 0.33f;
+        [SerializeField] private float boundsInset = 0.24f;
+        [SerializeField] private float boundsThickness = 0.08f;
+        [SerializeField] private int boundsSortingOrder = 11;
 
         [Header("Round")]
         [SerializeField] private float timeLimit = 4f;
@@ -28,6 +31,8 @@ namespace CraneMinigame
         [Header("Events")]
         [SerializeField] private UnityEvent onSuccess = new UnityEvent();
         [SerializeField] private UnityEvent onFailure = new UnityEvent();
+
+        private AudioSource _audio;
 
         private enum RoundState
         {
@@ -43,13 +48,45 @@ namespace CraneMinigame
         private GUIStyle titleStyle;
         private GUIStyle bodyStyle;
         private GUIStyle statusStyle;
+        private readonly List<BoxCollider2D> runtimeAds = new List<BoxCollider2D>();
+        private int currentAdIndex;
+        private bool isConfigured;
 
         private void Awake()
         {
             targetCamera = Camera.main;
+            if (closeButton != null)
+                closeButtonStartLocalPosition = closeButton.localPosition;
 
-            if (itemToDisableOnWin != null)
-                itemToDisableOnWin.SetActive(true);
+            _audio = GetComponent<AudioSource>();
+
+            CacheAds();
+            RefreshCurrentAdBounds();
+        }
+
+        private void Start()
+        {
+            CacheAds();
+            if (!isConfigured)
+            {
+                Debug.LogWarning($"{nameof(CloseTheAdMinigameController)} requires a close button and at least one ad collider.", this);
+                enabled = false;
+                return;
+            }
+
+            ResetRound();
+        }
+
+        private void OnValidate()
+        {
+            boundsInset = Mathf.Max(0f, boundsInset);
+            boundsThickness = Mathf.Max(0.01f, boundsThickness);
+
+            if (!Application.isPlaying)
+                return;
+
+            CacheAds();
+            RefreshCurrentAdBounds();
         }
 
         private void Update()
@@ -113,11 +150,7 @@ namespace CraneMinigame
 
                 if (Vector2.Distance(cursorWorld, closeButton.position) <= clickRadius)
                 {
-                    roundState = RoundState.Won;
-                    if (itemToDisableOnWin != null)
-                        itemToDisableOnWin.SetActive(false);
-                    onSuccess.Invoke();
-                    ReportRoundFinished(true);
+                    CloseCurrentAd();
                 }
 
                 return;
@@ -167,18 +200,123 @@ namespace CraneMinigame
         protected override void ResetRound()
         {
             roundState = RoundState.Playing;
-
-            if (itemToDisableOnWin != null)
-                itemToDisableOnWin.SetActive(true);
             timeRemaining = timeLimit;
             velocity = Random.insideUnitCircle.normalized;
             roundReported = false;
+            currentAdIndex = 0;
 
             if (velocity.sqrMagnitude < 0.01f)
                 velocity = new Vector2(1f, 0.8f);
 
+            for (int i = 0; i < runtimeAds.Count; i++)
+            {
+                if (runtimeAds[i] != null)
+                    runtimeAds[i].gameObject.SetActive(true);
+            }
+
+            RefreshCurrentAdBounds();
+            PlaceCloseButton(randomizeStartPoint);
+        }
+
+        private void CloseCurrentAd()
+        {
+            _audio.Play();
+
+            BoxCollider2D currentAd = GetCurrentAd();
+            if (currentAd == null)
+            {
+                FinishAsWon();
+                return;
+            }
+
+            currentAd.gameObject.SetActive(false);
+            currentAdIndex++;
+
+            if (currentAdIndex >= runtimeAds.Count)
+            {
+                FinishAsWon();
+                return;
+            }
+
+            velocity = Random.insideUnitCircle.normalized;
+            if (velocity.sqrMagnitude < 0.01f)
+                velocity = new Vector2(1f, 0.8f);
+
+            RefreshCurrentAdBounds();
+            PlaceCloseButton(true);
+        }
+
+        private void FinishAsWon()
+        {
+            roundState = RoundState.Won;
+            onSuccess.Invoke();
+            ReportRoundFinished(true);
+        }
+
+        private void CacheAds()
+        {
+            runtimeAds.Clear();
+
+            for (int i = 0; i < ads.Count; i++)
+            {
+                if (ads[i] != null)
+                    runtimeAds.Add(ads[i]);
+            }
+
+            isConfigured = closeButton != null && runtimeAds.Count > 0;
+        }
+
+        private BoxCollider2D GetCurrentAd()
+        {
+            if (currentAdIndex < 0 || currentAdIndex >= runtimeAds.Count)
+                return null;
+
+            return runtimeAds[currentAdIndex];
+        }
+
+        private void RefreshCurrentAdBounds()
+        {
+            BoxCollider2D currentAd = GetCurrentAd();
+            if (currentAd == null || closeButton == null)
+                return;
+
+            Transform space = closeButton.parent != null ? closeButton.parent : transform;
+
+            Bounds worldBounds = currentAd.bounds;
+            Vector3 localMin = space.InverseTransformPoint(new Vector3(worldBounds.min.x, worldBounds.min.y, closeButton.position.z));
+            Vector3 localMax = space.InverseTransformPoint(new Vector3(worldBounds.max.x, worldBounds.max.y, closeButton.position.z));
+
+            float paddingX = Mathf.Max(boundsInset, clickRadius * 0.75f);
+            float paddingY = Mathf.Max(boundsInset, clickRadius * 0.75f);
+
+            localMinBounds = new Vector2(localMin.x + paddingX, localMin.y + paddingY);
+            localMaxBounds = new Vector2(localMax.x - paddingX, localMax.y - paddingY);
+
+            if (localMaxBounds.x < localMinBounds.x)
+            {
+                float centerX = (localMin.x + localMax.x) * 0.5f;
+                localMinBounds.x = centerX;
+                localMaxBounds.x = centerX;
+            }
+
+            if (localMaxBounds.y < localMinBounds.y)
+            {
+                float centerY = (localMin.y + localMax.y) * 0.5f;
+                localMinBounds.y = centerY;
+                localMaxBounds.y = centerY;
+            }
+        }
+
+        private void PlaceCloseButton(bool useRandomPosition)
+        {
+            if (closeButton == null)
+                return;
+
             Vector3 nextPosition = closeButtonStartLocalPosition;
-            if (randomizeStartPoint)
+            nextPosition.x = Mathf.Clamp(nextPosition.x, localMinBounds.x, localMaxBounds.x);
+            nextPosition.y = Mathf.Clamp(nextPosition.y, localMinBounds.y, localMaxBounds.y);
+
+            if (useRandomPosition)
             {
                 nextPosition.x = Random.Range(localMinBounds.x, localMaxBounds.x);
                 nextPosition.y = Random.Range(localMinBounds.y, localMaxBounds.y);
@@ -218,17 +356,43 @@ namespace CraneMinigame
 
         private string GetStatusText()
         {
+            int adsLeft = Mathf.Max(0, runtimeAds.Count - currentAdIndex);
             switch (roundState)
             {
                 case RoundState.Playing:
-                    return $"Status: {timeRemaining:0.0}s left. Click the X.";
+                    return $"Status: {timeRemaining:0.0}s left. Ads left: {adsLeft}. Click the X.";
                 case RoundState.Won:
-                    return "Status: Ad closed. Click or press R to restart.";
+                    return "Status: All ads closed. Click or press R to restart.";
                 case RoundState.Lost:
                     return "Status: Too slow. Click or press R to try again.";
                 default:
                     return string.Empty;
             }
+        }
+
+        private void OnDrawGizmosSelected()
+        {
+            BoxCollider2D currentAd = GetCurrentAd();
+            if (currentAd == null)
+            {
+                for (int i = 0; i < ads.Count; i++)
+                {
+                    if (ads[i] != null)
+                    {
+                        currentAd = ads[i];
+                        break;
+                    }
+                }
+            }
+
+            if (closeButton == null || currentAd == null)
+                return;
+
+            Gizmos.color = Color.white;
+            Gizmos.DrawWireCube(currentAd.bounds.center, currentAd.bounds.size);
+
+            Gizmos.color = Color.yellow;
+            Gizmos.DrawWireSphere(closeButton.position, clickRadius);
         }
     }
 }
