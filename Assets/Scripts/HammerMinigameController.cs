@@ -26,6 +26,9 @@ namespace HammerMinigame
         [SerializeField] private float strikeSpeed = 15f;
         [SerializeField] private float returnSpeed = 8f;
 
+        [Header("Audio")]
+        [SerializeField] private AudioSource hitAudio;
+
         [Header("Game Settings")]
         [SerializeField] private int hitsRequired = 5;
         [SerializeField] private float timeLimit = 15f;
@@ -89,6 +92,12 @@ namespace HammerMinigame
             Vector3 lp = hammerTransform.localPosition;
             lp.y = hammerRestLocalY;
             hammerTransform.localPosition = lp;
+
+            if (hitAudio != null)
+            {
+                hitAudio.playOnAwake = false;
+                hitAudio.Stop();
+            }
         }
 
         private void Update()
@@ -274,6 +283,9 @@ namespace HammerMinigame
                     Destroy(targets[i].Object);
                     targets.RemoveAt(i);
                     hitCount++;
+
+                    if (hitAudio != null)
+                        hitAudio.Play();
 
                     if (hitCount >= hitsRequired)
                     {
