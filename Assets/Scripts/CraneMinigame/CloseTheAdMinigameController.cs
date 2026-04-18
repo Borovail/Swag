@@ -11,6 +11,7 @@ namespace CraneMinigame
     {
 
         [SerializeField] private Transform closeButton;
+        [SerializeField] private GameObject itemToDisableOnWin;
         private Camera targetCamera;
 
         [Header("Movement")]
@@ -46,6 +47,9 @@ namespace CraneMinigame
         private void Awake()
         {
             targetCamera = Camera.main;
+
+            if (itemToDisableOnWin != null)
+                itemToDisableOnWin.SetActive(true);
         }
 
         private void Update()
@@ -110,6 +114,8 @@ namespace CraneMinigame
                 if (Vector2.Distance(cursorWorld, closeButton.position) <= clickRadius)
                 {
                     roundState = RoundState.Won;
+                    if (itemToDisableOnWin != null)
+                        itemToDisableOnWin.SetActive(false);
                     onSuccess.Invoke();
                     ReportRoundFinished(true);
                 }
@@ -161,6 +167,9 @@ namespace CraneMinigame
         protected override void ResetRound()
         {
             roundState = RoundState.Playing;
+
+            if (itemToDisableOnWin != null)
+                itemToDisableOnWin.SetActive(true);
             timeRemaining = timeLimit;
             velocity = Random.insideUnitCircle.normalized;
             roundReported = false;

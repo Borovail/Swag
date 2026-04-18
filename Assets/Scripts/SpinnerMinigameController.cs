@@ -1,7 +1,6 @@
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.InputSystem;
-using UnityEngine.UI;
 
 namespace SpinnerMinigame
 {
@@ -9,7 +8,7 @@ namespace SpinnerMinigame
     public sealed class SpinnerMinigameController : GameController
     {
         [SerializeField] private Transform catTransform;
-        [SerializeField] private Image progressBar;
+        [SerializeField] private RectTransform pointerTransform;
 
         [Header("Spin Settings")]
         [SerializeField] private float timeLimit = 5f;
@@ -152,8 +151,12 @@ namespace SpinnerMinigame
 
         private void UpdateProgressBar()
         {
-            if (progressBar != null)
-                progressBar.fillAmount = Mathf.Clamp01(spinSpeed / targetSpeed);
+            if (pointerTransform == null)
+                return;
+
+            float fill = Mathf.Clamp01(spinSpeed / targetSpeed);
+            float angle = Mathf.Lerp(86f, -92f, fill);
+            pointerTransform.localEulerAngles = new Vector3(0f, 0f, angle);
         }
 
         private void UpdateCoasting()
