@@ -11,6 +11,7 @@ namespace CraneMinigame
     {
         [SerializeField] private Transform intermissionRoot;
         [SerializeField] private float intermissionDuration = 2f;
+        [SerializeField] private float finishLevelDuration = 2f;
         [SerializeField] private int startingHealth = 3;
         [SerializeField] private string PathToGameControllers;
 
@@ -33,6 +34,7 @@ namespace CraneMinigame
         private GUIStyle bodyStyle;
 
         private GameController[] _gameControllers;
+        private int _currentMinigameIndex = -1;
 
         private void Awake()
         {
@@ -59,6 +61,13 @@ namespace CraneMinigame
             for (int i = 0; i < prefabs.Length; i++)
             {
                 _gameControllers[i] = Instantiate(prefabs[i]);
+            }
+
+            if (_gameControllers.Length == 0)
+            {
+                Debug.LogWarning($"{nameof(DoomscrollCycleManager)} did not find any minigames in Resources path '{PathToGameControllers}'.", this);
+                enabled = false;
+                return;
             }
 
             currentHealth = Mathf.Max(1, startingHealth);
@@ -104,12 +113,8 @@ namespace CraneMinigame
 
         private GameController ChooseNextMinigame()
         {
-            var next = _gameControllers[Random.Range(0, _gameControllers.Length)];
-
-            if (_gameControllers.Length > 1 && next == currentMinigame)
-                next = _gameControllers[(System.Array.IndexOf(_gameControllers, next) + 1 + Random.Range(0, _gameControllers.Length - 1)) % _gameControllers.Length];
-
-            return next;
+            _currentMinigameIndex = (_currentMinigameIndex + 1) % _gameControllers.Length;
+            return _gameControllers[_currentMinigameIndex];
         }
 
         private void HandleRoundFinished(bool isSuccess)
@@ -125,6 +130,8 @@ namespace CraneMinigame
             if (!isSuccess)
                 currentHealth = Mathf.Max(0, currentHealth - 1);
 
+            yield return new WaitForSeconds(finishLevelDuration);
+            
             StopCurrentRound();
             ShowIntermission(isSuccess);
             yield return new WaitForSeconds(intermissionDuration);
