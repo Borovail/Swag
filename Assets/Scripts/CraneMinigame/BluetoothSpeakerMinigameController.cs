@@ -57,6 +57,8 @@ namespace CraneMinigame
             Lost
         }
 
+        private float baseTimeLimit;
+        private float basePulseSpeed;
         private RoundState roundState = RoundState.Playing;
         private int hitsDone;
         private float timeRemaining;
@@ -592,8 +594,15 @@ namespace CraneMinigame
             }
         }
 
+        public override void SetTimeLimit(float seconds) => timeLimit = seconds;
+        public override float GetBaseTimeLimit() => baseTimeLimit;
+        public override void SetSpeedMultiplier(float multiplier) => speakerPulseSpeed = basePulseSpeed * multiplier;
+
         private void CacheState()
         {
+            baseTimeLimit = timeLimit;
+            basePulseSpeed = speakerPulseSpeed;
+
             if (speakerRoot != null)
             {
                 speakerBaseScale = speakerRoot.localScale;

@@ -33,6 +33,8 @@ namespace SpinnerMinigame
             Lost
         }
 
+        private float baseTimeLimit;
+        private float baseSpeedDecay;
         private RoundState roundState = RoundState.WaitingToStart;
         private float spinSpeed;
         private float timeElapsed;
@@ -47,6 +49,8 @@ namespace SpinnerMinigame
 
         private void Awake()
         {
+            baseTimeLimit = timeLimit;
+            baseSpeedDecay = speedDecay;
             if (catTransform == null)
             {
                 Debug.LogError($"[SpinnerMinigame] catTransform is not assigned on {gameObject.name}.", this);
@@ -93,7 +97,7 @@ namespace SpinnerMinigame
                 return;
             }
 
-            if (roundState == RoundState.WaitingToStart && mouse != null && mouse.leftButton.wasPressedThisFrame)
+            if (roundState == RoundState.WaitingToStart && mouse != null && mouse.delta.ReadValue().sqrMagnitude > 0.01f)
             {
                 roundState = RoundState.Spinning;
                 timeElapsed = 0f;
@@ -107,15 +111,11 @@ namespace SpinnerMinigame
         private void UpdateSpinning()
         {
             Mouse mouse = Mouse.current;
-            bool holding = mouse != null && mouse.leftButton.isPressed;
 
-            if (holding)
+            if (mouse != null)
                 TrackAnticlockwiseSpin(mouse);
             else
-            {
-                mouseAngleValid = false;
                 spinSpeed = Mathf.Max(0f, spinSpeed - speedDecay * Time.deltaTime);
-            }
 
             if (catTransform != null)
                 catTransform.Rotate(Vector3.up, spinSpeed * Time.deltaTime, Space.Self);
@@ -187,7 +187,10 @@ namespace SpinnerMinigame
 
             // positive angleDelta = anti-clockwise in screen space (Atan2 convention)
             if (angleDelta <= 0f)
+            {
+                spinSpeed = Mathf.Max(0f, spinSpeed - speedDecay * Time.deltaTime);
                 return;
+            }
 
             accumulatedAngle += angleDelta;
 
@@ -207,6 +210,10 @@ namespace SpinnerMinigame
             lastMouseAngle = Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg;
             mouseAngleValid = true;
         }
+
+        public override void SetTimeLimit(float seconds) => timeLimit = seconds;
+        public override float GetBaseTimeLimit() => baseTimeLimit;
+        public override void SetSpeedMultiplier(float multiplier) => speedDecay = baseSpeedDecay * multiplier;
 
         protected override void ResetRound()
         {
@@ -241,7 +248,7 @@ namespace SpinnerMinigame
             Rect statusRect = new Rect(panelRect.x + 14f, panelRect.y + 62f, panelRect.width - 28f, 20f);
 
             GUI.Label(titleRect, "Spinner Mini-Game", titleStyle);
-            GUI.Label(bodyRect, "Hold LMB and move anti-clockwise to spin the cat.", bodyStyle);
+            GUI.Label(bodyRect, "Move the mouse anti-clockwise to spin the cat.", bodyStyle);
             GUI.Label(statusRect, GetStatusText(), statusStyle);
         }
 
@@ -251,7 +258,7 @@ namespace SpinnerMinigame
             switch (roundState)
             {
                 case RoundState.WaitingToStart:
-                    return "Status: Hold LMB and start spinning anti-clockwise!";
+                    return "Status: Move the mouse anti-clockwise to start spinning!";
                 case RoundState.Spinning:
                     float remaining = Mathf.Max(0f, timeLimit - timeElapsed);
                     float progress = spinSpeed / targetSpeed * 100f;

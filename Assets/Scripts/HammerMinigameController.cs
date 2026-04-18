@@ -59,6 +59,8 @@ namespace HammerMinigame
             public float BaseLocalY;
         }
 
+        private float baseTimeLimit;
+        private float baseMoveSpeed;
         private RoundState roundState = RoundState.Active;
         private HammerState hammerState = HammerState.Idle;
         private readonly List<ActiveTarget> targets = new();
@@ -75,6 +77,8 @@ namespace HammerMinigame
 
         private void Awake()
         {
+            baseTimeLimit = timeLimit;
+            baseMoveSpeed = moveSpeed;
             if (hammerTransform == null)
             {
                 Debug.LogError($"[HammerMinigame] hammerTransform is not assigned on {gameObject.name}.", this);
@@ -298,6 +302,10 @@ namespace HammerMinigame
                 }
             }
         }
+
+        public override void SetTimeLimit(float seconds) => timeLimit = seconds;
+        public override float GetBaseTimeLimit() => baseTimeLimit;
+        public override void SetSpeedMultiplier(float multiplier) => moveSpeed = baseMoveSpeed * multiplier;
 
         protected override void ResetRound()
         {
