@@ -49,12 +49,11 @@ namespace SniperMinigame
             Returning
         }
 
-        private const int SpawnCount = 9;
+        private int spawnCount = 9;
 
         private RoundState roundState = RoundState.WaitingForShot;
         private RifleState rifleState = RifleState.Idle;
         private float timeElapsed;
-        private float baseTimeLimit;
         private readonly List<GameObject> spawnedTargets = new();
         private Sprite[] targetSprites;
         private Sprite[] decoySprites;
@@ -67,7 +66,6 @@ namespace SniperMinigame
 
         private void Awake()
         {
-            baseTimeLimit = timeLimit;
             targetSprites = LoadSprites(targetsFolder);
             decoySprites = LoadSprites(decoysFolder);
 
@@ -213,22 +211,21 @@ namespace SniperMinigame
                 return;
 
             Sprite chosenTarget = targetSprites[Random.Range(0, targetSprites.Length)];
-            Sprite[] chosenDecoys = PickRandom(decoySprites, SpawnCount - 1);
-
+            Sprite[] chosenDecoys = PickRandom(decoySprites, spawnCount - 1);
             correctTargetName = chosenTarget.name;
 
-            Sprite[] allSlots = new Sprite[SpawnCount];
-            correctTargetIndex = Random.Range(0, SpawnCount);
+            Sprite[] allSlots = new Sprite[spawnCount];
+            correctTargetIndex = Random.Range(0, spawnCount);
 
             int decoyIdx = 0;
-            for (int i = 0; i < SpawnCount; i++)
+            for (int i = 0; i < spawnCount; i++)
                 allSlots[i] = (i == correctTargetIndex) ? chosenTarget : chosenDecoys[decoyIdx++];
 
             targetPrefab.SetActive(true);
 
             List<Vector2> usedPositions = new();
 
-            for (int i = 0; i < SpawnCount; i++)
+            for (int i = 0; i < spawnCount; i++)
             {
                 Vector2 pos = FindSpawnPosition(usedPositions);
                 usedPositions.Add(pos);
@@ -317,8 +314,17 @@ namespace SniperMinigame
             return false;
         }
 
-        public override void SetTimeLimit(float seconds) => timeLimit = seconds;
-        public override float GetBaseTimeLimit() => baseTimeLimit;
+        public override void ApplyDifficulty(Difficulty difficulty)
+        {
+            spawnCount = difficulty switch
+            {
+                Difficulty.Easy   => 9,
+                Difficulty.Medium => 11,
+                Difficulty.Hard   => 13,
+                Difficulty.Insane => 15,
+                _                 => 9
+            };
+        }
 
         protected override void ResetRound()
         {

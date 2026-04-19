@@ -53,6 +53,9 @@ namespace CraneMinigame
         }
 
         private RoundState roundState = RoundState.Aiming;
+        private float baseHorizontalSpeed;
+        private float baseDescendSpeed;
+        private float baseAscendSpeed;
         private float horizontalDirection = 1f;
         private bool targetAttached;
         private Transform targetOriginalParent;
@@ -70,6 +73,10 @@ namespace CraneMinigame
 
         private void Awake()
         {
+            baseHorizontalSpeed = horizontalSpeed;
+            baseDescendSpeed = descendSpeed;
+            baseAscendSpeed = ascendSpeed;
+
             if (carriage != null)
             {
                 carriageStartPosition = carriage.position;
@@ -246,6 +253,22 @@ namespace CraneMinigame
             targetObject.SetParent(grabPoint, true);
             targetObject.localPosition = grabbedTargetLocalOffset;
             targetObject.localRotation = Quaternion.identity;
+        }
+
+        public override void ApplyDifficulty(Difficulty difficulty)
+        {
+            float multiplier = difficulty switch
+            {
+                Difficulty.Easy   => 1f,
+                Difficulty.Medium => 1.3f,
+                Difficulty.Hard   => 1.7f,
+                Difficulty.Insane => 2.2f,
+                _                 => 1f
+            };
+
+            horizontalSpeed = baseHorizontalSpeed * multiplier;
+            descendSpeed    = baseDescendSpeed    * multiplier;
+            ascendSpeed     = baseAscendSpeed     * multiplier;
         }
 
         protected override void ResetRound()

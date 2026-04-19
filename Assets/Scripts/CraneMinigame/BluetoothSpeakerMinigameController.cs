@@ -59,7 +59,6 @@ namespace CraneMinigame
         }
 
         private float baseTimeLimit;
-        private float basePulseSpeed;
         private RoundState roundState = RoundState.Playing;
         private int hitsDone;
         private float timeRemaining;
@@ -598,14 +597,23 @@ namespace CraneMinigame
             }
         }
 
-        public override void SetTimeLimit(float seconds) => timeLimit = seconds;
-        public override float GetBaseTimeLimit() => baseTimeLimit;
-        public override void SetSpeedMultiplier(float multiplier) => speakerPulseSpeed = basePulseSpeed * multiplier;
+        public override void ApplyDifficulty(Difficulty difficulty)
+        {
+            float timeMult = difficulty switch
+            {
+                Difficulty.Easy   => 1f,
+                Difficulty.Medium => 0.85f,
+                Difficulty.Hard   => 0.65f,
+                Difficulty.Insane => 0.55f,
+                _                 => 1f
+            };
+
+            timeLimit   = baseTimeLimit   * timeMult;
+        }
 
         private void CacheState()
         {
-            baseTimeLimit = timeLimit;
-            basePulseSpeed = speakerPulseSpeed;
+            baseTimeLimit   = timeLimit;
 
             if (speakerRoot != null)
             {

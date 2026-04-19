@@ -16,7 +16,7 @@ namespace HammerMinigame
         [Header("Targets")]
         [SerializeField] private GameObject targetPrefab;
         [SerializeField] private float spawnLocalY = -5f;
-        [SerializeField] private float moveSpeed = 2f;
+        [SerializeField] private float moveSpeed = 4.5f;
         [SerializeField] private float moveDistance = 5f;
         [SerializeField] private float appearanceInterval = 1.5f;
         [SerializeField] private Vector2 spawnXRange = new(-6f, 6f);
@@ -59,7 +59,6 @@ namespace HammerMinigame
             public float BaseLocalY;
         }
 
-        private float baseTimeLimit;
         private float baseMoveSpeed;
         private RoundState roundState = RoundState.Active;
         private HammerState hammerState = HammerState.Idle;
@@ -77,7 +76,6 @@ namespace HammerMinigame
 
         private void Awake()
         {
-            baseTimeLimit = timeLimit;
             baseMoveSpeed = moveSpeed;
             if (hammerTransform == null)
             {
@@ -257,7 +255,7 @@ namespace HammerMinigame
                 }
                 else
                 {
-                    lp.y = Mathf.MoveTowards(lp.y, t.BaseLocalY, moveSpeed * Time.deltaTime);
+                    lp.y = Mathf.MoveTowards(lp.y, t.BaseLocalY, moveSpeed * 2f * Time.deltaTime);
                     t.Object.transform.localPosition = lp;
 
                     if (Mathf.Approximately(lp.y, t.BaseLocalY))
@@ -303,9 +301,19 @@ namespace HammerMinigame
             }
         }
 
-        public override void SetTimeLimit(float seconds) => timeLimit = seconds;
-        public override float GetBaseTimeLimit() => baseTimeLimit;
-        public override void SetSpeedMultiplier(float multiplier) => moveSpeed = baseMoveSpeed * multiplier;
+        public override void ApplyDifficulty(Difficulty difficulty)
+        {
+            float multiplier = difficulty switch
+            {
+                Difficulty.Easy   => 1f,
+                Difficulty.Medium => 1.35f,
+                Difficulty.Hard   => 1.8f,
+                Difficulty.Insane => 2.4f,
+                _                 => 1f
+            };
+
+            moveSpeed = baseMoveSpeed * multiplier;
+        }
 
         protected override void ResetRound()
         {

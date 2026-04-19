@@ -25,6 +25,8 @@ namespace CraneMinigame
 
         [SerializeField] private AudioClip _winSound;
         [SerializeField] private AudioClip _loseSound;
+        [SerializeField] private float _winSoundVolume = 0.9f;
+        [SerializeField] private float _loseSoundVolume = 0.6f;
         [SerializeField] private AudioSource _intermissionAudioSource;
 
         [SerializeField] private float intermissionDuration = 2f;
@@ -32,10 +34,7 @@ namespace CraneMinigame
         [SerializeField] private string PathToGameControllers;
 
         [Header("Difficulty Scaling")]
-        [SerializeField] private float timeLimitReductionPerRound = 0.5f;
-        [SerializeField] private float minTimeLimit = 3f;
-        [SerializeField] private int roundsPerSpeedIncrease = 3;
-        [SerializeField] private float speedMultiplierIncrement = 0.15f;
+        [SerializeField] private int roundsPerDifficultyStep = 3;
 
         private GameController currentMinigame;
         private Coroutine transitionRoutine;
@@ -104,15 +103,9 @@ namespace CraneMinigame
 
             nextMinigame.gameObject.SetActive(true);
 
-            int speedSteps = totalRoundsPlayed / Mathf.Max(1, roundsPerSpeedIncrease);
-
-            float reducedTime = Mathf.Max(minTimeLimit,
-                nextMinigame.GetBaseTimeLimit() - timeLimitReductionPerRound * speedSteps);
-            nextMinigame.SetTimeLimit(reducedTime);
-
-            float speedMultiplier = 1f + speedSteps * speedMultiplierIncrement;
-            nextMinigame.SetSpeedMultiplier(speedMultiplier);
-
+            int step = Mathf.Min(totalRoundsPlayed / Mathf.Max(1, roundsPerDifficultyStep), 3);
+            nextMinigame.ApplyDifficulty((GameController.Difficulty)step);
+            Debug.Log($"Starting round {totalRoundsPlayed + 1} with difficulty {(GameController.Difficulty)step}.");
             nextMinigame.RoundFinished -= HandleRoundFinished;
             nextMinigame.RoundFinished += HandleRoundFinished;
             nextMinigame.BeginManagedRound();
@@ -191,6 +184,7 @@ namespace CraneMinigame
             _intermissionVisual.sprite = isSuccess ? _intermissionVisualWin : _intermissionVisualLose;
 
             _intermissionAudioSource.clip = isSuccess ? _winSound : _loseSound;
+            _intermissionAudioSource.volume = isSuccess ? _winSoundVolume : _loseSoundVolume;
 
             intermissionRoot.SetActive(true);
         }

@@ -33,8 +33,8 @@ namespace SpinnerMinigame
             Lost
         }
 
-        private float baseTimeLimit;
         private float baseSpeedDecay;
+        private float baseTargetSpeed;
         private RoundState roundState = RoundState.WaitingToStart;
         private float spinSpeed;
         private float timeElapsed;
@@ -49,8 +49,8 @@ namespace SpinnerMinigame
 
         private void Awake()
         {
-            baseTimeLimit = timeLimit;
             baseSpeedDecay = speedDecay;
+            baseTargetSpeed = targetSpeed;
             if (catTransform == null)
             {
                 Debug.LogError($"[SpinnerMinigame] catTransform is not assigned on {gameObject.name}.", this);
@@ -211,9 +211,29 @@ namespace SpinnerMinigame
             mouseAngleValid = true;
         }
 
-        public override void SetTimeLimit(float seconds) => timeLimit = seconds;
-        public override float GetBaseTimeLimit() => baseTimeLimit;
-        public override void SetSpeedMultiplier(float multiplier) => speedDecay = baseSpeedDecay * multiplier;
+        public override void ApplyDifficulty(Difficulty difficulty)
+        {
+            float decayMultiplier = difficulty switch
+            {
+                Difficulty.Easy   => 1f,
+                Difficulty.Medium => 1.2f,
+                Difficulty.Hard   => 1.4f,
+                Difficulty.Insane => 1.8f,
+                _                 => 1f
+            };
+
+            float speedMultiplier = difficulty switch
+            {
+                Difficulty.Easy   => 1f,
+                Difficulty.Medium => 1.1f,
+                Difficulty.Hard   => 1.3f,
+                Difficulty.Insane => 1.5f,
+                _                 => 1f
+            };
+
+            speedDecay   = baseSpeedDecay   * decayMultiplier;
+            targetSpeed  = baseTargetSpeed  * speedMultiplier;
+        }
 
         protected override void ResetRound()
         {

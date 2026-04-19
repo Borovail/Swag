@@ -52,7 +52,7 @@ MonoBehaviour:
   hammerLocalY: 2
   targetPrefab: {fileID: 4250230291916689732}
   spawnLocalY: -6
-  moveSpeed: 4
+  moveSpeed: 4.5
   moveDistance: 3
   appearanceInterval: 0.6
   spawnXRange: {x: -6, y: 6}
@@ -60,7 +60,7 @@ MonoBehaviour:
   strikeSpeed: 75
   returnSpeed: 25
   hitAudio: {fileID: 3609491940066411553}
-  hitsRequired: 5
+  hitsRequired: 6
   timeLimit: 5
   onSuccess:
     m_PersistentCalls:

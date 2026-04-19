@@ -3,15 +3,14 @@ using UnityEngine;
 
 public abstract class GameController : MonoBehaviour
 {
+    public enum Difficulty { Easy, Medium, Hard, Insane }
+
     protected bool autoRestartEnabled = true;
     protected bool roundReported;
 
-
     public event Action<bool> RoundFinished;
 
-    public virtual void SetTimeLimit(float seconds) { }
-    public virtual float GetBaseTimeLimit() => float.MaxValue;
-    public virtual void SetSpeedMultiplier(float multiplier) { }
+    public virtual void ApplyDifficulty(Difficulty difficulty) { }
 
     public void BeginManagedRound()
     {
@@ -24,18 +23,14 @@ public abstract class GameController : MonoBehaviour
         autoRestartEnabled = false;
     }
 
-
     protected void ReportRoundFinished(bool isSuccess)
     {
         if (roundReported)
-        {
             return;
-        }
 
         roundReported = true;
         RoundFinished?.Invoke(isSuccess);
     }
 
     protected abstract void ResetRound();
-
 }

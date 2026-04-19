@@ -41,7 +41,7 @@ namespace CraneMinigame
             Lost
         }
 
-        private float baseTimeLimit;
+        private float baseMoveSpeed;
         private RoundState roundState = RoundState.Playing;
         private Vector2 velocity = new Vector2(1f, 1f);
         private Vector3 closeButtonStartLocalPosition;
@@ -55,7 +55,7 @@ namespace CraneMinigame
 
         private void Awake()
         {
-            baseTimeLimit = timeLimit;
+            baseMoveSpeed = moveSpeed;
             targetCamera = Camera.main;
             if (closeButton != null)
                 closeButtonStartLocalPosition = closeButton.localPosition;
@@ -199,11 +199,25 @@ namespace CraneMinigame
             velocity = Vector2.ClampMagnitude(velocity, 1.75f);
         }
 
-        public override void SetTimeLimit(float seconds) => timeLimit = seconds;
-        public override float GetBaseTimeLimit() => baseTimeLimit;
+        public override void ApplyDifficulty(Difficulty difficulty)
+        {
+            float multiplier = difficulty switch
+            {
+                Difficulty.Easy   => 1f,
+                Difficulty.Medium => 1.4f,
+                Difficulty.Hard   => 2f,
+                Difficulty.Insane => 2.8f,
+                _                 => 1f
+            };
+
+            moveSpeed = baseMoveSpeed * multiplier;
+        }
 
         protected override void ResetRound()
         {
+            if (closeButton != null)
+                closeButton.gameObject.SetActive(true);
+
             roundState = RoundState.Playing;
             timeRemaining = timeLimit;
             velocity = Random.insideUnitCircle.normalized;
@@ -253,6 +267,9 @@ namespace CraneMinigame
 
         private void FinishAsWon()
         {
+            if (closeButton != null)
+                closeButton.gameObject.SetActive(false);
+
             roundState = RoundState.Won;
             onSuccess.Invoke();
             ReportRoundFinished(true);
