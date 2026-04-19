@@ -13,6 +13,9 @@ namespace CraneMinigame
         [SerializeField] private AudioClip _craneMoveSound;
         [SerializeField] private AudioClip _craneMiss;
         [SerializeField] private AudioClip _craneCatch;
+        [SerializeField] private float _craneMoveVolume = 1f;
+        [SerializeField] private float _craneMissVolume = 1f;
+        [SerializeField] private float _craneCatchVolume = 1f;
 
         [SerializeField] private Transform carriage;
         [FormerlySerializedAs("hook")]
@@ -114,7 +117,7 @@ namespace CraneMinigame
                 {
                     timeRemaining = 0f;
                     StopMovementSound();
-                    PlayOneShot(_craneMiss);
+                    PlayOneShot(_craneMiss, _craneMissVolume);
                     roundState = RoundState.Lost;
                     onFailure.Invoke();
                     ReportRoundFinished(false);
@@ -136,25 +139,25 @@ namespace CraneMinigame
             }
         }
 
-        private void OnGUI()
-        {
-            if (!enabled)
-                return;
+        // private void OnGUI()
+        // {
+        //     if (!enabled)
+        //         return;
 
-            EnsureGuiStyles();
+        //     EnsureGuiStyles();
 
-            float panelWidth = Mathf.Min(430f, Screen.width - 30f);
-            Rect panelRect = new Rect(16f, 16f, panelWidth, 112f);
-            GUI.Box(panelRect, GUIContent.none);
+        //     float panelWidth = Mathf.Min(430f, Screen.width - 30f);
+        //     Rect panelRect = new Rect(16f, 16f, panelWidth, 112f);
+        //     GUI.Box(panelRect, GUIContent.none);
 
-            Rect titleRect = new Rect(panelRect.x + 14f, panelRect.y + 10f, panelRect.width - 28f, 24f);
-            Rect bodyRect = new Rect(panelRect.x + 14f, panelRect.y + 38f, panelRect.width - 28f, 38f);
-            Rect statusRect = new Rect(panelRect.x + 14f, panelRect.y + 77f, panelRect.width - 28f, 24f);
+        //     Rect titleRect = new Rect(panelRect.x + 14f, panelRect.y + 10f, panelRect.width - 28f, 24f);
+        //     Rect bodyRect = new Rect(panelRect.x + 14f, panelRect.y + 38f, panelRect.width - 28f, 38f);
+        //     Rect statusRect = new Rect(panelRect.x + 14f, panelRect.y + 77f, panelRect.width - 28f, 24f);
 
-            GUI.Label(titleRect, "Crane Claw Mini-Game", titleStyle);
-            GUI.Label(bodyRect, "Press Space when the claw is above the object.\nHit it to lift the prize. Miss it and the round is lost.", bodyStyle);
-            GUI.Label(statusRect, GetStatusText(), statusStyle);
-        }
+        //     GUI.Label(titleRect, "Crane Claw Mini-Game", titleStyle);
+        //     GUI.Label(bodyRect, "Press Space when the claw is above the object.\nHit it to lift the prize. Miss it and the round is lost.", bodyStyle);
+        //     GUI.Label(statusRect, GetStatusText(), statusStyle);
+        // }
 
         private void HandleInput()
         {
@@ -212,7 +215,7 @@ namespace CraneMinigame
             if (Mathf.Approximately(carriage.position.y, carriageBottomY))
             {
                 StopMovementSound();
-                PlayOneShot(_craneMiss);
+                PlayOneShot(_craneMiss, _craneMissVolume);
                 roundState = RoundState.Lost;
                 onFailure.Invoke();
                 ReportRoundFinished(false);
@@ -248,7 +251,7 @@ namespace CraneMinigame
                 return;
 
             StopMovementSound();
-            PlayOneShot(_craneCatch);
+            PlayOneShot(_craneCatch, _craneCatchVolume);
             targetAttached = true;
             targetObject.SetParent(grabPoint, true);
             targetObject.localPosition = grabbedTargetLocalOffset;
@@ -308,6 +311,7 @@ namespace CraneMinigame
 
             _audio.clip = _craneMoveSound;
             _audio.loop = true;
+            _audio.volume = _craneMoveVolume;
             _audio.Play();
             _isMovementSoundPlaying = true;
         }
@@ -323,12 +327,12 @@ namespace CraneMinigame
             _isMovementSoundPlaying = false;
         }
 
-        private void PlayOneShot(AudioClip clip)
+        private void PlayOneShot(AudioClip clip, float volume = 1f)
         {
             if (_audio == null || clip == null)
                 return;
 
-            _audio.PlayOneShot(clip);
+            _audio.PlayOneShot(clip, volume);
         }
 
         private void SetCarriageY(float nextY)

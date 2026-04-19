@@ -113,25 +113,25 @@ namespace CraneMinigame
             ReportRoundFinished(false);
         }
 
-        private void OnGUI()
-        {
-            if (!enabled)
-                return;
+        // private void OnGUI()
+        // {
+        //     if (!enabled)
+        //         return;
 
-            EnsureGuiStyles();
+        //     EnsureGuiStyles();
 
-            float panelWidth = Mathf.Min(420f, Screen.width - 30f);
-            Rect panelRect = new Rect(Screen.width - panelWidth - 16f, 16f, panelWidth, 120f);
-            GUI.Box(panelRect, GUIContent.none);
+        //     float panelWidth = Mathf.Min(420f, Screen.width - 30f);
+        //     Rect panelRect = new Rect(Screen.width - panelWidth - 16f, 16f, panelWidth, 120f);
+        //     GUI.Box(panelRect, GUIContent.none);
 
-            Rect titleRect = new Rect(panelRect.x + 14f, panelRect.y + 10f, panelRect.width - 28f, 24f);
-            Rect bodyRect = new Rect(panelRect.x + 14f, panelRect.y + 38f, panelRect.width - 28f, 40f);
-            Rect statusRect = new Rect(panelRect.x + 14f, panelRect.y + 82f, panelRect.width - 28f, 24f);
+        //     Rect titleRect = new Rect(panelRect.x + 14f, panelRect.y + 10f, panelRect.width - 28f, 24f);
+        //     Rect bodyRect = new Rect(panelRect.x + 14f, panelRect.y + 38f, panelRect.width - 28f, 40f);
+        //     Rect statusRect = new Rect(panelRect.x + 14f, panelRect.y + 82f, panelRect.width - 28f, 24f);
 
-            GUI.Label(titleRect, "Close The Ad", titleStyle);
-            GUI.Label(bodyRect, "Click the moving X before the timer runs out.\nIt keeps sliding around, so you need to react fast.", bodyStyle);
-            GUI.Label(statusRect, GetStatusText(), statusStyle);
-        }
+        //     GUI.Label(titleRect, "Close The Ad", titleStyle);
+        //     GUI.Label(bodyRect, "Click the moving X before the timer runs out.\nIt keeps sliding around, so you need to react fast.", bodyStyle);
+        //     GUI.Label(statusRect, GetStatusText(), statusStyle);
+        // }
 
         private void HandleInput()
         {

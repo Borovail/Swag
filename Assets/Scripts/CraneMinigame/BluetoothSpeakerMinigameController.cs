@@ -125,27 +125,27 @@ namespace CraneMinigame
             ReportRoundFinished(false);
         }
 
-        private void OnGUI()
-        {
-            if (!enabled)
-            {
-                return;
-            }
+        // private void OnGUI()
+        // {
+        //     if (!enabled)
+        //     {
+        //         return;
+        //     }
 
-            EnsureGuiStyles();
+        //     EnsureGuiStyles();
 
-            float panelWidth = Mathf.Min(430f, Screen.width - 30f);
-            Rect panelRect = new Rect(Screen.width - panelWidth - 16f, Screen.height - 136f, panelWidth, 120f);
-            GUI.Box(panelRect, GUIContent.none);
+        //     float panelWidth = Mathf.Min(430f, Screen.width - 30f);
+        //     Rect panelRect = new Rect(Screen.width - panelWidth - 16f, Screen.height - 136f, panelWidth, 120f);
+        //     GUI.Box(panelRect, GUIContent.none);
 
-            Rect titleRect = new Rect(panelRect.x + 14f, panelRect.y + 10f, panelRect.width - 28f, 24f);
-            Rect bodyRect = new Rect(panelRect.x + 14f, panelRect.y + 38f, panelRect.width - 28f, 38f);
-            Rect statusRect = new Rect(panelRect.x + 14f, panelRect.y + 80f, panelRect.width - 28f, 24f);
+        //     Rect titleRect = new Rect(panelRect.x + 14f, panelRect.y + 10f, panelRect.width - 28f, 24f);
+        //     Rect bodyRect = new Rect(panelRect.x + 14f, panelRect.y + 38f, panelRect.width - 28f, 38f);
+        //     Rect statusRect = new Rect(panelRect.x + 14f, panelRect.y + 80f, panelRect.width - 28f, 24f);
 
-            GUI.Label(titleRect, "Bluetooth Speaker Smash", titleStyle);
-            GUI.Label(bodyRect, "The speaker is blasting music. Use the mouse like a hammer and smash it before time runs out.", bodyStyle);
-            GUI.Label(statusRect, GetStatusText(), statusStyle);
-        }
+        //     GUI.Label(titleRect, "Bluetooth Speaker Smash", titleStyle);
+        //     GUI.Label(bodyRect, "The speaker is blasting music. Use the mouse like a hammer and smash it before time runs out.", bodyStyle);
+        //     GUI.Label(statusRect, GetStatusText(), statusStyle);
+        // }
 
         private void HandleInput()
         {

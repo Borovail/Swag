@@ -231,6 +231,9 @@ MonoBehaviour:
   _craneMoveSound: {fileID: 8300000, guid: 9db1e8098e9f6024cab747fa11ec92fa, type: 3}
   _craneMiss: {fileID: 8300000, guid: a46e8a61273e1a347985722a407de34d, type: 3}
   _craneCatch: {fileID: 8300000, guid: 0b3106ec111704541b326a06fba1d00c, type: 3}
+  _craneMoveVolume: 1
+  _craneMissVolume: 1
+  _craneCatchVolume: 0.4
   carriage: {fileID: 7999356313736685552}
   grabPoint: {fileID: 437220595166920589}
   targetObject: {fileID: 3797020025580044688}

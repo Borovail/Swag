@@ -255,25 +255,25 @@ namespace SpinnerMinigame
                 catTransform.localRotation = Quaternion.identity;
         }
 
-        private void OnGUI()
-        {
-            if (!enabled)
-                return;
+        // private void OnGUI()
+        // {
+        //     if (!enabled)
+        //         return;
 
-            EnsureGuiStyles();
+        //     EnsureGuiStyles();
 
-            float panelWidth = Mathf.Min(430f, Screen.width - 30f);
-            Rect panelRect = new Rect(16f, 16f, panelWidth, 90f);
-            GUI.Box(panelRect, GUIContent.none);
+        //     float panelWidth = Mathf.Min(430f, Screen.width - 30f);
+        //     Rect panelRect = new Rect(16f, 16f, panelWidth, 90f);
+        //     GUI.Box(panelRect, GUIContent.none);
 
-            Rect titleRect  = new Rect(panelRect.x + 14f, panelRect.y + 10f, panelRect.width - 28f, 24f);
-            Rect bodyRect   = new Rect(panelRect.x + 14f, panelRect.y + 38f, panelRect.width - 28f, 24f);
-            Rect statusRect = new Rect(panelRect.x + 14f, panelRect.y + 62f, panelRect.width - 28f, 20f);
+        //     Rect titleRect  = new Rect(panelRect.x + 14f, panelRect.y + 10f, panelRect.width - 28f, 24f);
+        //     Rect bodyRect   = new Rect(panelRect.x + 14f, panelRect.y + 38f, panelRect.width - 28f, 24f);
+        //     Rect statusRect = new Rect(panelRect.x + 14f, panelRect.y + 62f, panelRect.width - 28f, 20f);
 
-            GUI.Label(titleRect, "Spinner Mini-Game", titleStyle);
-            GUI.Label(bodyRect, "Move the mouse anti-clockwise to spin the cat.", bodyStyle);
-            GUI.Label(statusRect, GetStatusText(), statusStyle);
-        }
+        //     GUI.Label(titleRect, "Spinner Mini-Game", titleStyle);
+        //     GUI.Label(bodyRect, "Move the mouse anti-clockwise to spin the cat.", bodyStyle);
+        //     GUI.Label(statusRect, GetStatusText(), statusStyle);
+        // }
 
 
         private string GetStatusText()

@@ -342,25 +342,25 @@ namespace HammerMinigame
             }
         }
 
-        private void OnGUI()
-        {
-            if (!enabled)
-                return;
+        // private void OnGUI()
+        // {
+        //     if (!enabled)
+        //         return;
 
-            EnsureGuiStyles();
+        //     EnsureGuiStyles();
 
-            float panelWidth = Mathf.Min(430f, Screen.width - 30f);
-            Rect panelRect = new Rect(16f, 16f, panelWidth, 112f);
-            GUI.Box(panelRect, GUIContent.none);
+        //     float panelWidth = Mathf.Min(430f, Screen.width - 30f);
+        //     Rect panelRect = new Rect(16f, 16f, panelWidth, 112f);
+        //     GUI.Box(panelRect, GUIContent.none);
 
-            Rect titleRect = new Rect(panelRect.x + 14f, panelRect.y + 10f, panelRect.width - 28f, 24f);
-            Rect bodyRect = new Rect(panelRect.x + 14f, panelRect.y + 38f, panelRect.width - 28f, 38f);
-            Rect statusRect = new Rect(panelRect.x + 14f, panelRect.y + 77f, panelRect.width - 28f, 24f);
+        //     Rect titleRect = new Rect(panelRect.x + 14f, panelRect.y + 10f, panelRect.width - 28f, 24f);
+        //     Rect bodyRect = new Rect(panelRect.x + 14f, panelRect.y + 38f, panelRect.width - 28f, 38f);
+        //     Rect statusRect = new Rect(panelRect.x + 14f, panelRect.y + 77f, panelRect.width - 28f, 24f);
 
-            GUI.Label(titleRect, "Hammer Mini-Game", titleStyle);
-            GUI.Label(bodyRect, "Move mouse to aim. Click to strike the rising targets.\nHit enough before time runs out!", bodyStyle);
-            GUI.Label(statusRect, GetStatusText(), statusStyle);
-        }
+        //     GUI.Label(titleRect, "Hammer Mini-Game", titleStyle);
+        //     GUI.Label(bodyRect, "Move mouse to aim. Click to strike the rising targets.\nHit enough before time runs out!", bodyStyle);
+        //     GUI.Label(statusRect, GetStatusText(), statusStyle);
+        // }
 
         private string GetStatusText()
         {
