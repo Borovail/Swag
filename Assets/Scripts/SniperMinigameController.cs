@@ -314,6 +314,9 @@ namespace SniperMinigame
             return false;
         }
 
+        public override ControlScheme RequiredControls => ControlScheme.Mouse;
+        public override string ControlDescription => "Find and click the correct target before time runs out.";
+
         public override void ApplyDifficulty(Difficulty difficulty)
         {
             spawnCount = difficulty switch

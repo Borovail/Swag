@@ -255,6 +255,9 @@ namespace CraneMinigame
             targetObject.localRotation = Quaternion.identity;
         }
 
+        public override ControlScheme RequiredControls => ControlScheme.Spacebar;
+        public override string ControlDescription => "Press Space when the claw is above the prize.";
+
         public override void ApplyDifficulty(Difficulty difficulty)
         {
             float multiplier = difficulty switch

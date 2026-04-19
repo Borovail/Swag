@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,6 +9,13 @@ using UnityEngine.UI;
 
 namespace CraneMinigame
 {
+    [Serializable]
+    public sealed class ControlSchemeIcon
+    {
+        public GameController.ControlScheme scheme;
+        public Sprite icon;
+    }
+
     [DisallowMultipleComponent]
     public sealed class DoomscrollCycleManager : MonoBehaviour
     {
@@ -28,6 +36,11 @@ namespace CraneMinigame
         [SerializeField] private float _winSoundVolume = 0.9f;
         [SerializeField] private float _loseSoundVolume = 0.6f;
         [SerializeField] private AudioSource _intermissionAudioSource;
+
+        [Header("Next Game Preview")]
+        [SerializeField] private Image _controlSchemeImage;
+        [SerializeField] private Text _controlDescriptionText;
+        [SerializeField] private List<ControlSchemeIcon> _controlSchemeIcons = new();
 
         [SerializeField] private float intermissionDuration = 2f;
         [SerializeField] private float finishLevelDuration = 2f;
@@ -119,6 +132,12 @@ namespace CraneMinigame
             return _gameControllers[_currentMinigameIndex];
         }
 
+        private GameController PeekNextMinigame()
+        {
+            int nextIndex = (_currentMinigameIndex + 1) % _gameControllers.Length;
+            return _gameControllers[nextIndex];
+        }
+
         private void HandleRoundFinished(bool isSuccess)
         {
             if (transitionRoutine != null)
@@ -185,6 +204,17 @@ namespace CraneMinigame
 
             _intermissionAudioSource.clip = isSuccess ? _winSound : _loseSound;
             _intermissionAudioSource.volume = isSuccess ? _winSoundVolume : _loseSoundVolume;
+
+            GameController next = PeekNextMinigame();
+
+            if (_controlSchemeImage != null)
+            {
+                ControlSchemeIcon entry = _controlSchemeIcons.Find(e => e.scheme == next.RequiredControls);
+                _controlSchemeImage.sprite = entry?.icon;
+            }
+
+            if (_controlDescriptionText != null)
+                _controlDescriptionText.text = next.ControlDescription;
 
             intermissionRoot.SetActive(true);
         }

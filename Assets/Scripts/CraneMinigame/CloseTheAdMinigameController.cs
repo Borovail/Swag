@@ -3,6 +3,7 @@ using UnityEngine.Events;
 using UnityEngine.InputSystem;
 using Random = UnityEngine.Random;
 using System.Collections.Generic;
+using System;
 
 namespace CraneMinigame
 {
@@ -198,6 +199,7 @@ namespace CraneMinigame
 
             velocity = Vector2.ClampMagnitude(velocity, 1.75f);
         }
+
 
         public override void ApplyDifficulty(Difficulty difficulty)
         {

@@ -211,6 +211,9 @@ namespace SpinnerMinigame
             mouseAngleValid = true;
         }
 
+        public override ControlScheme RequiredControls => ControlScheme.Mouse;
+        public override string ControlDescription => "Move the mouse anti-clockwise to spin the cat.";
+
         public override void ApplyDifficulty(Difficulty difficulty)
         {
             float decayMultiplier = difficulty switch
