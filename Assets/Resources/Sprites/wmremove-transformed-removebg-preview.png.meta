@@ -1,13 +1,10 @@
 fileFormatVersion: 2
-guid: 1af19a461e60d8941aedb59b3c9a2e42
+guid: 12da5a7b26fa5a542bb463b97a486f9f
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 1913676537823614955
-    second: Cute-Cat-Staring-Intently-At-Moving-Shadow-PNG_0
-  - first:
-      213: -1761456033080030530
-    second: Cute-Cat-Staring-Intently-At-Moving-Shadow-PNG_1
+      213: -1777321046302260823
+    second: wmremove-transformed-removebg-preview_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -116,13 +113,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Cute-Cat-Staring-Intently-At-Moving-Shadow-PNG_0
+      name: wmremove-transformed-removebg-preview_0
       rect:
         serializedVersion: 2
-        x: 0
-        y: 0
-        width: 976
-        height: 900
+        x: 106
+        y: 6
+        width: 300
+        height: 486
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -131,30 +128,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: be7d9fb0caebe8a10800000000000000
-      internalID: 1913676537823614955
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Cute-Cat-Staring-Intently-At-Moving-Shadow-PNG_1
-      rect:
-        serializedVersion: 2
-        x: 967
-        y: 371
-        width: 9
-        height: 18
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: ebacbcc021d0e87e0800000000000000
-      internalID: -1761456033080030530
+      spriteID: 9a1045fccefa557e0800000000000000
+      internalID: -1777321046302260823
       vertices: []
       indices: 
       edges: []
@@ -173,8 +148,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Cute-Cat-Staring-Intently-At-Moving-Shadow-PNG_0: 1913676537823614955
-      Cute-Cat-Staring-Intently-At-Moving-Shadow-PNG_1: -1761456033080030530
+      wmremove-transformed-removebg-preview_0: -1777321046302260823
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

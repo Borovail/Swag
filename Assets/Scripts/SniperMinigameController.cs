@@ -315,7 +315,7 @@ namespace SniperMinigame
         }
 
         public override ControlScheme RequiredControls => ControlScheme.Mouse;
-        public override string ControlDescription => "Find and click the correct target before time runs out.";
+        public override string ControlDescription => "Kill the brainrot";
 
         public override void ApplyDifficulty(Difficulty difficulty)
         {

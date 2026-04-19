@@ -302,7 +302,7 @@ namespace HammerMinigame
         }
 
         public override ControlScheme RequiredControls => ControlScheme.Mouse;
-        public override string ControlDescription => "Move mouse to aim. Click to strike the rising targets.";
+        public override string ControlDescription => "Smash Tung Tung Tung Sahur";
 
         public override void ApplyDifficulty(Difficulty difficulty)
         {

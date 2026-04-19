@@ -99,8 +99,16 @@ namespace CraneMinigame
 
             ResetCycleState();
             SetAllMinigamesActive(false);
+            StartCoroutine(StartWindow());
+        }
+
+        private IEnumerator StartWindow()
+        {
+            ShowIntermission(true, false);
+            yield return new WaitForSeconds(intermissionDuration);
             StartNextRound();
         }
+
 
         private void OnDestroy()
         {
@@ -195,9 +203,10 @@ namespace CraneMinigame
                 gameController.gameObject.SetActive(isActive);
         }
 
-        private void ShowIntermission(bool isSuccess)
+        private void ShowIntermission(bool isSuccess, bool showTitle = true)
         {
             intermissionScoreText.text = $"Score: {clearedMinigamesCount}";
+            intermissionTitleText.gameObject.SetActive(showTitle);
             intermissionTitleText.text = isSuccess ? "Nice" : "Ouch";
 
             _intermissionVisual.sprite = isSuccess ? _intermissionVisualWin : _intermissionVisualLose;

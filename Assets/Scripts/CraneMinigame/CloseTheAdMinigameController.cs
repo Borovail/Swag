@@ -33,6 +33,9 @@ namespace CraneMinigame
         [SerializeField] private UnityEvent onSuccess = new UnityEvent();
         [SerializeField] private UnityEvent onFailure = new UnityEvent();
 
+        public override ControlScheme RequiredControls => ControlScheme.Mouse;
+        public override string ControlDescription => "Close an Ad";
+
         private AudioSource _audio;
 
         private enum RoundState
@@ -205,11 +208,11 @@ namespace CraneMinigame
         {
             float multiplier = difficulty switch
             {
-                Difficulty.Easy   => 1f,
+                Difficulty.Easy => 1f,
                 Difficulty.Medium => 1.4f,
-                Difficulty.Hard   => 2f,
+                Difficulty.Hard => 2f,
                 Difficulty.Insane => 2.8f,
-                _                 => 1f
+                _ => 1f
             };
 
             moveSpeed = baseMoveSpeed * multiplier;

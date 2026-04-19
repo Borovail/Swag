@@ -256,7 +256,7 @@ namespace CraneMinigame
         }
 
         public override ControlScheme RequiredControls => ControlScheme.Spacebar;
-        public override string ControlDescription => "Press Space when the claw is above the prize.";
+        public override string ControlDescription => "Catch Patrick";
 
         public override void ApplyDifficulty(Difficulty difficulty)
         {

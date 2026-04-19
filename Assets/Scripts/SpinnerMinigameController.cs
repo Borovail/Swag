@@ -212,7 +212,7 @@ namespace SpinnerMinigame
         }
 
         public override ControlScheme RequiredControls => ControlScheme.Mouse;
-        public override string ControlDescription => "Move the mouse anti-clockwise to spin the cat.";
+        public override string ControlDescription => "Spin the cat";
 
         public override void ApplyDifficulty(Difficulty difficulty)
         {

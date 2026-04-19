@@ -598,7 +598,7 @@ namespace CraneMinigame
         }
 
         public override ControlScheme RequiredControls => ControlScheme.Mouse;
-        public override string ControlDescription => "Click the speaker repeatedly to smash it before time runs out.";
+        public override string ControlDescription => "Smash the speaker";
 
         public override void ApplyDifficulty(Difficulty difficulty)
         {
