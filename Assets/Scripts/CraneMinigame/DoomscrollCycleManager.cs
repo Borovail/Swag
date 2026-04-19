@@ -12,6 +12,9 @@ namespace CraneMinigame
     public sealed class DoomscrollCycleManager : MonoBehaviour
     {
         [SerializeField] private GameObject intermissionRoot;
+        [SerializeField] private Image _intermissionVisual;
+        [SerializeField] private Sprite _intermissionVisualWin;
+        [SerializeField] private Sprite _intermissionVisualLose;
         [SerializeField] private Text intermissionScoreText;
         [SerializeField] private Text intermissionTitleText;
         [SerializeField] private Transform HealthBar;
@@ -19,6 +22,10 @@ namespace CraneMinigame
         [SerializeField] private GameObject gameOverRoot;
         [SerializeField] private Text gameOverScoreText;
         [SerializeField] private Button playAgainButton;
+
+        [SerializeField] private AudioClip _winSound;
+        [SerializeField] private AudioClip _loseSound;
+        [SerializeField] private AudioSource _intermissionAudioSource;
 
         [SerializeField] private float intermissionDuration = 2f;
         [SerializeField] private float finishLevelDuration = 2f;
@@ -179,7 +186,11 @@ namespace CraneMinigame
         private void ShowIntermission(bool isSuccess)
         {
             intermissionScoreText.text = $"Score: {clearedMinigamesCount}";
-            intermissionTitleText.text = isSuccess ? "Next Scroll" : "Ouch";
+            intermissionTitleText.text = isSuccess ? "Nice" : "Ouch";
+
+            _intermissionVisual.sprite = isSuccess ? _intermissionVisualWin : _intermissionVisualLose;
+
+            _intermissionAudioSource.clip = isSuccess ? _winSound : _loseSound;
 
             intermissionRoot.SetActive(true);
         }

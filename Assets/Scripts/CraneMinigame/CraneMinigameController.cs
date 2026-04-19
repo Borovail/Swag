@@ -1,8 +1,8 @@
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.InputSystem;
-using System;
 using Random = UnityEngine.Random;
+using UnityEngine.Serialization;
 
 namespace CraneMinigame
 {
@@ -10,9 +10,13 @@ namespace CraneMinigame
     public sealed class CraneMinigameController : GameController
     {
 
+        [SerializeField] private AudioClip _craneMoveSound;
+        [SerializeField] private AudioClip _craneMiss;
+        [SerializeField] private AudioClip _craneCatch;
+
         [SerializeField] private Transform carriage;
-        [SerializeField] private Transform hook;
-        [SerializeField] private Transform rope;
+        [FormerlySerializedAs("hook")]
+        [SerializeField] private Transform grabPoint;
         [SerializeField] private Transform targetObject;
 
         [Header("Horizontal Movement")]
@@ -21,8 +25,8 @@ namespace CraneMinigame
         [SerializeField] private float horizontalSpeed = 2.8f;
 
         [Header("Vertical Movement")]
-        [SerializeField] private float hookTopLocalY = -1f;
-        [SerializeField] private float hookBottomLocalY = -6.3f;
+        [FormerlySerializedAs("hookBottomLocalY")]
+        [SerializeField] private float carriageBottomY = -6.3f;
         [SerializeField] private float descendSpeed = 5f;
         [SerializeField] private float ascendSpeed = 5.5f;
 
@@ -31,6 +35,9 @@ namespace CraneMinigame
         [SerializeField] private float grabToleranceY = 0.65f;
         [SerializeField] private Vector2 targetSpawnRange = new Vector2(-4.4f, 4.4f);
         [SerializeField] private Vector3 grabbedTargetLocalOffset = new Vector3(0f, -0.95f, 0f);
+
+        [Header("Round")]
+        [SerializeField] private float timeLimit = 6f;
 
         [Header("Events")]
         [SerializeField] private UnityEvent onSuccess = new UnityEvent();
@@ -51,24 +58,62 @@ namespace CraneMinigame
         private Transform targetOriginalParent;
         private Vector3 targetStartPosition;
         private Vector3 targetStartScale;
-        private Vector3 hookStartLocalPosition;
+        private Vector3 carriageStartPosition;
+        private float timeRemaining;
         private GUIStyle titleStyle;
         private GUIStyle bodyStyle;
         private GUIStyle statusStyle;
+        private bool isConfigured;
+
+        private AudioSource _audio;
+        private bool _isMovementSoundPlaying;
 
         private void Awake()
         {
-            if (targetOriginalParent == null)
+            if (carriage != null)
+            {
+                carriageStartPosition = carriage.position;
+            }
+
+            if (targetObject != null && targetOriginalParent == null)
             {
                 targetOriginalParent = targetObject.parent;
                 targetStartScale = targetObject.localScale;
                 targetStartPosition = targetObject.localPosition;
             }
+
+            isConfigured = carriage != null && grabPoint != null && targetObject != null;
+
+            _audio = GetComponent<AudioSource>();
+        }
+
+        private void Start()
+        {
+            if (isConfigured)
+                return;
+
+            Debug.LogWarning($"{nameof(CraneMinigameController)} requires carriage, grab point and target object references.", this);
+            enabled = false;
         }
 
         private void Update()
         {
             HandleInput();
+
+            if (roundState == RoundState.Aiming || roundState == RoundState.Descending || roundState == RoundState.Ascending)
+            {
+                timeRemaining -= Time.deltaTime;
+                if (timeRemaining <= 0f)
+                {
+                    timeRemaining = 0f;
+                    StopMovementSound();
+                    PlayOneShot(_craneMiss);
+                    roundState = RoundState.Lost;
+                    onFailure.Invoke();
+                    ReportRoundFinished(false);
+                    return;
+                }
+            }
 
             switch (roundState)
             {
@@ -126,6 +171,8 @@ namespace CraneMinigame
 
         private void UpdateHorizontalMovement()
         {
+            EnsureMovementSoundPlaying();
+
             Vector3 nextPosition = carriage.position;
             nextPosition.x += horizontalDirection * horizontalSpeed * Time.deltaTime;
 
@@ -145,7 +192,8 @@ namespace CraneMinigame
 
         private void UpdateDrop()
         {
-            SetHookLocalY(Mathf.MoveTowards(hook.localPosition.y, hookBottomLocalY, descendSpeed * Time.deltaTime));
+            EnsureMovementSoundPlaying();
+            SetCarriageY(Mathf.MoveTowards(carriage.position.y, carriageBottomY, descendSpeed * Time.deltaTime));
             TryGrabTarget();
 
             if (targetAttached)
@@ -154,8 +202,10 @@ namespace CraneMinigame
                 return;
             }
 
-            if (Mathf.Approximately(hook.localPosition.y, hookBottomLocalY))
+            if (Mathf.Approximately(carriage.position.y, carriageBottomY))
             {
+                StopMovementSound();
+                PlayOneShot(_craneMiss);
                 roundState = RoundState.Lost;
                 onFailure.Invoke();
                 ReportRoundFinished(false);
@@ -164,10 +214,12 @@ namespace CraneMinigame
 
         private void UpdateLift()
         {
-            SetHookLocalY(Mathf.MoveTowards(hook.localPosition.y, hookTopLocalY, ascendSpeed * Time.deltaTime));
+            EnsureMovementSoundPlaying();
+            SetCarriageY(Mathf.MoveTowards(carriage.position.y, carriageStartPosition.y, ascendSpeed * Time.deltaTime));
 
-            if (Mathf.Approximately(hook.localPosition.y, hookTopLocalY))
+            if (Mathf.Approximately(carriage.position.y, carriageStartPosition.y))
             {
+                StopMovementSound();
                 roundState = RoundState.Won;
                 onSuccess.Invoke();
                 ReportRoundFinished(true);
@@ -179,7 +231,7 @@ namespace CraneMinigame
             if (targetAttached)
                 return;
 
-            Vector3 hookTipPosition = hook.position + (Vector3.down * 0.15f);
+            Vector3 hookTipPosition = grabPoint.position;
             Vector3 targetPosition = targetObject.position;
 
             bool insideHorizontalWindow = Mathf.Abs(hookTipPosition.x - targetPosition.x) <= grabToleranceX;
@@ -188,9 +240,10 @@ namespace CraneMinigame
             if (!insideHorizontalWindow || !insideVerticalWindow)
                 return;
 
+            StopMovementSound();
+            PlayOneShot(_craneCatch);
             targetAttached = true;
-            targetObject.SetParent(hook, true);
-            Debug.Log("sET PARENT");
+            targetObject.SetParent(grabPoint, true);
             targetObject.localPosition = grabbedTargetLocalOffset;
             targetObject.localRotation = Quaternion.identity;
         }
@@ -201,18 +254,17 @@ namespace CraneMinigame
             horizontalDirection = 1f;
             targetAttached = false;
             roundReported = false;
+            timeRemaining = timeLimit;
+            StopMovementSound();
 
             if (targetObject.parent != targetOriginalParent)
             {
                 targetObject.SetParent(targetOriginalParent, true);
-                Debug.Log("sET PARENT");
             }
 
-            Vector3 carriagePosition = carriage.position;
+            Vector3 carriagePosition = carriageStartPosition;
             carriagePosition.x = leftLimit;
             carriage.position = carriagePosition;
-
-            SetHookLocalY(hookTopLocalY);
 
             Vector3 nextTargetPosition = targetStartPosition;
             if (targetSpawnRange.x < targetSpawnRange.y)
@@ -223,27 +275,41 @@ namespace CraneMinigame
             targetObject.localScale = targetStartScale;
         }
 
-        private void SetHookLocalY(float nextY)
+        private void EnsureMovementSoundPlaying()
         {
-            Vector3 nextHookPosition = hook.localPosition;
-            nextHookPosition.y = nextY;
-            hook.localPosition = nextHookPosition;
-            UpdateRopeVisual();
+            if (_audio == null || _craneMoveSound == null || _isMovementSoundPlaying)
+                return;
+
+            _audio.clip = _craneMoveSound;
+            _audio.loop = true;
+            _audio.Play();
+            _isMovementSoundPlaying = true;
         }
 
-        private void UpdateRopeVisual()
+        private void StopMovementSound()
         {
-            const float carriageBottomY = -0.45f;
-            float hookTopY = hook.localPosition.y + 0.32f;
-            float ropeLength = Mathf.Abs(carriageBottomY - hookTopY);
+            if (_audio == null || !_isMovementSoundPlaying)
+                return;
 
-            Vector3 ropePosition = rope.localPosition;
-            ropePosition.y = (carriageBottomY + hookTopY) * 0.5f;
-            rope.localPosition = ropePosition;
+            _audio.Stop();
+            _audio.loop = false;
+            _audio.clip = null;
+            _isMovementSoundPlaying = false;
+        }
 
-            Vector3 ropeScale = rope.localScale;
-            ropeScale.y = ropeLength;
-            rope.localScale = ropeScale;
+        private void PlayOneShot(AudioClip clip)
+        {
+            if (_audio == null || clip == null)
+                return;
+
+            _audio.PlayOneShot(clip);
+        }
+
+        private void SetCarriageY(float nextY)
+        {
+            Vector3 nextCarriagePosition = carriage.position;
+            nextCarriagePosition.y = nextY;
+            carriage.position = nextCarriagePosition;
         }
 
         private void EnsureGuiStyles()
@@ -280,15 +346,15 @@ namespace CraneMinigame
             switch (roundState)
             {
                 case RoundState.Aiming:
-                    return "Status: Aim the claw, then press Space.";
+                    return $"Status: {timeRemaining:0.0}s left. Aim the claw, then press Space.";
                 case RoundState.Descending:
-                    return "Status: Dropping...";
+                    return $"Status: {timeRemaining:0.0}s left. Dropping...";
                 case RoundState.Ascending:
-                    return "Status: Prize grabbed. Lifting it back up.";
+                    return $"Status: {timeRemaining:0.0}s left. Prize grabbed. Lifting it back up.";
                 case RoundState.Won:
                     return "Status: Success! Press Space or R to restart.";
                 case RoundState.Lost:
-                    return "Status: Missed it. Press Space or R to try again.";
+                    return "Status: Time up or missed it. Press Space or R to try again.";
                 default:
                     return string.Empty;
             }

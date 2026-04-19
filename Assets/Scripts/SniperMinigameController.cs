@@ -12,7 +12,7 @@ namespace SniperMinigame
         [Header("Targets")]
         [SerializeField] private GameObject targetPrefab;
         [SerializeField] private string targetsFolder = "Sprites/Targets";
-        [SerializeField] private string decoysFolder  = "Sprites/Decoys";
+        [SerializeField] private string decoysFolder = "Sprites/Decoys";
 
         [Header("Spawn Area")]
         [SerializeField] private Vector2 spawnAreaMin = new Vector2(-7f, -3f);
@@ -22,6 +22,7 @@ namespace SniperMinigame
 
         [Header("Rifle")]
         [SerializeField] private Transform rifleTransform;
+        [SerializeField] private GameObject cursorFollowerObject;
         [SerializeField] private AudioSource shootAudio;
         [SerializeField] private float recoilSpeed = 800f;
         [SerializeField] private float returnSpeed = 50f;
@@ -48,7 +49,7 @@ namespace SniperMinigame
             Returning
         }
 
-        private const int SpawnCount = 7;
+        private const int SpawnCount = 9;
 
         private RoundState roundState = RoundState.WaitingForShot;
         private RifleState rifleState = RifleState.Idle;
@@ -68,7 +69,7 @@ namespace SniperMinigame
         {
             baseTimeLimit = timeLimit;
             targetSprites = LoadSprites(targetsFolder);
-            decoySprites  = LoadSprites(decoysFolder);
+            decoySprites = LoadSprites(decoysFolder);
 
             if (targetSprites.Length == 0)
                 Debug.LogError($"[SniperMinigame] No textures found in Resources/{targetsFolder}", this);
@@ -85,12 +86,15 @@ namespace SniperMinigame
 
         private void Start()
         {
+            HideSystemCursor();
+
             if (spawnedTargets.Count == 0)
                 SpawnTargets();
         }
 
         private void Update()
         {
+            UpdateCursorFollower();
             HandleInput();
             UpdateRifle();
 
@@ -104,6 +108,29 @@ namespace SniperMinigame
                     ReportRoundFinished(false);
                 }
             }
+        }
+
+        private void UpdateCursorFollower()
+        {
+            if (cursorFollowerObject == null)
+                return;
+
+            Mouse mouse = Mouse.current;
+            Camera mainCamera = Camera.main;
+
+            if (mouse == null || mainCamera == null)
+                return;
+
+            Vector3 cursorPosition = cursorFollowerObject.transform.position;
+            Vector3 mouseScreenPosition = mouse.position.ReadValue();
+            Vector3 worldPoint = mainCamera.ScreenToWorldPoint(
+                new Vector3(
+                    mouseScreenPosition.x,
+                    mouseScreenPosition.y,
+                    Mathf.Abs(mainCamera.transform.position.z - cursorPosition.z)));
+
+            worldPoint.z = cursorPosition.z;
+            cursorFollowerObject.transform.position = worldPoint;
         }
 
         private void HandleInput()
@@ -156,6 +183,8 @@ namespace SniperMinigame
                 onFailure.Invoke();
                 ReportRoundFinished(false);
             }
+
+            Destroy(hit.gameObject);
         }
 
         private void UpdateRifle()
@@ -213,7 +242,7 @@ namespace SniperMinigame
 
                 if (obj.TryGetComponent(out CircleCollider2D col))
                 {
-                    float worldW = allSlots[i].rect.width  / allSlots[i].pixelsPerUnit;
+                    float worldW = allSlots[i].rect.width / allSlots[i].pixelsPerUnit;
                     float worldH = allSlots[i].rect.height / allSlots[i].pixelsPerUnit;
                     col.radius = Mathf.Max(worldW, worldH) * 0.5f;
                 }
@@ -293,6 +322,7 @@ namespace SniperMinigame
 
         protected override void ResetRound()
         {
+            HideSystemCursor();
             roundState = RoundState.WaitingForShot;
             rifleState = RifleState.Idle;
             roundReported = false;
@@ -308,6 +338,21 @@ namespace SniperMinigame
             SpawnTargets();
         }
 
+        private void OnDisable()
+        {
+            ShowSystemCursor();
+        }
+
+        private static void HideSystemCursor()
+        {
+            Cursor.visible = false;
+        }
+
+        private static void ShowSystemCursor()
+        {
+            Cursor.visible = true;
+        }
+
         private void OnGUI()
         {
             if (!enabled)
@@ -319,8 +364,8 @@ namespace SniperMinigame
             Rect panelRect = new Rect(16f, 16f, panelWidth, 112f);
             GUI.Box(panelRect, GUIContent.none);
 
-            Rect titleRect  = new Rect(panelRect.x + 14f, panelRect.y + 10f, panelRect.width - 28f, 24f);
-            Rect bodyRect   = new Rect(panelRect.x + 14f, panelRect.y + 38f, panelRect.width - 28f, 38f);
+            Rect titleRect = new Rect(panelRect.x + 14f, panelRect.y + 10f, panelRect.width - 28f, 24f);
+            Rect bodyRect = new Rect(panelRect.x + 14f, panelRect.y + 38f, panelRect.width - 28f, 38f);
             Rect statusRect = new Rect(panelRect.x + 14f, panelRect.y + 77f, panelRect.width - 28f, 24f);
 
             GUI.Label(titleRect, "Sniper Mini-Game", titleStyle);
@@ -331,9 +376,9 @@ namespace SniperMinigame
         private string GetStatusText() => roundState switch
         {
             RoundState.WaitingForShot => $"Status: Find \"{correctTargetName}\"!  —  {Mathf.Max(0f, timeLimit - timeElapsed):0.0}s left",
-            RoundState.Won            => "Status: Target eliminated! Press R to restart.",
-            RoundState.Lost           => "Status: Time's up / wrong target! Press R to try again.",
-            _                         => string.Empty
+            RoundState.Won => "Status: Target eliminated! Press R to restart.",
+            RoundState.Lost => "Status: Time's up / wrong target! Press R to try again.",
+            _ => string.Empty
         };
 
         private void EnsureGuiStyles()

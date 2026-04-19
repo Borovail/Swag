@@ -9,6 +9,7 @@ namespace CraneMinigame
     public sealed class BluetoothSpeakerMinigameController : GameController
     {
         [SerializeField] private Transform speakerRoot;
+        [SerializeField] private GameObject speakerVisual;
         [SerializeField] private Transform hitTarget;
         [SerializeField] private Transform hammerVisual;
         [SerializeField] private Transform destroyedStage;
@@ -217,6 +218,8 @@ namespace CraneMinigame
                 return;
             }
 
+            speakerVisual.SetActive(false);
+
             roundState = RoundState.Won;
             speakerDestroyed = true;
             lastResult = "Speaker destroyed. Silence achieved.";
@@ -228,6 +231,7 @@ namespace CraneMinigame
 
         protected override void ResetRound()
         {
+            speakerVisual.SetActive(true);
             roundState = RoundState.Playing;
             hitsDone = 0;
             timeRemaining = timeLimit;

@@ -155,7 +155,7 @@ namespace SpinnerMinigame
                 return;
 
             float fill = Mathf.Clamp01(spinSpeed / targetSpeed);
-            float angle = Mathf.Lerp(86f, -92f, fill);
+            float angle = Mathf.Lerp(-92, 86, fill);
             pointerTransform.localEulerAngles = new Vector3(0f, 0f, angle);
         }
 
